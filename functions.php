@@ -323,3 +323,122 @@ add_filter('the_content', function($content){
         $content
     );
 });
+
+// ===== ГОРОДА =====
+function novosti_get_cities() {
+    return array(
+        'berlin'      => 'Берлин',
+        'hamburg'     => 'Гамбург',
+        'munich'      => 'Мюнхен',
+        'cologne'     => 'Кёльн',
+        'frankfurt'   => 'Франкфурт',
+        'stuttgart'   => 'Штутгарт',
+        'duesseldorf' => 'Дюссельдорф',
+        'leipzig'     => 'Лейпциг',
+        'dortmund'    => 'Дортмунд',
+        'essen'       => 'Эссен',
+    );
+}
+
+function novosti_is_city_category() {
+    if ( ! is_category() ) return false;
+    $obj = get_queried_object();
+    if ( ! $obj || ! isset( $obj->slug ) ) return false;
+    return isset( novosti_get_cities()[ $obj->slug ] );
+}
+
+function novosti_get_city_name( $slug = '' ) {
+    if ( ! $slug ) {
+        $obj = get_queried_object();
+        $slug = $obj ? $obj->slug : '';
+    }
+    $cities = novosti_get_cities();
+    return isset( $cities[ $slug ] ) ? $cities[ $slug ] : '';
+}
+
+function novosti_get_excluded_cats() {
+    $ex = array();
+    foreach ( array( 'reklama', 'partner', 'afisha' ) as $s ) {
+        $c = get_category_by_slug( $s );
+        if ( $c ) $ex[] = $c->term_id;
+    }
+    return $ex;
+}
+
+function novosti_get_city_latest_news( $city_slug, $count = 6 ) {
+    $city_cat = get_category_by_slug( $city_slug );
+    if ( ! $city_cat ) return array();
+    return get_posts( array(
+        'post_type'      => 'post',
+        'posts_per_page' => $count,
+        'category__in'   => array( $city_cat->term_id ),
+        'category__not_in' => novosti_get_excluded_cats(),
+    ) );
+}
+
+function novosti_get_city_yesterday_news( $city_slug, $count = 3 ) {
+    $city_cat = get_category_by_slug( $city_slug );
+    if ( ! $city_cat ) return array();
+    return get_posts( array(
+        'post_type'        => 'post',
+        'posts_per_page'   => $count,
+        'category__in'     => array( $city_cat->term_id ),
+        'category__not_in' => novosti_get_excluded_cats(),
+        'date_query'       => array( array(
+            'year'  => date( 'Y', strtotime( '-1 day' ) ),
+            'month' => date( 'm', strtotime( '-1 day' ) ),
+            'day'   => date( 'd', strtotime( '-1 day' ) ),
+        ) ),
+    ) );
+}
+
+function novosti_get_city_afisha( $city_slug, $count = 3 ) {
+    $city_cat   = get_category_by_slug( $city_slug );
+    $afisha_cat = get_category_by_slug( 'afisha' );
+    if ( ! $city_cat || ! $afisha_cat ) return array();
+    return get_posts( array(
+        'post_type'      => 'post',
+        'posts_per_page' => $count,
+        'category__and'  => array( $city_cat->term_id, $afisha_cat->term_id ),
+        'orderby'        => 'meta_value',
+        'meta_key'       => '_event_date',
+        'order'          => 'ASC',
+    ) );
+}
+
+// Фильтр главного запроса для городских страниц: убирает reklama/partner/afisha
+add_action( 'pre_get_posts', 'novosti_city_query_filter' );
+function novosti_city_query_filter( $query ) {
+    if ( is_admin() || ! $query->is_main_query() || ! $query->is_category() ) return;
+
+    $cat_name = $query->get( 'category_name' );
+    // Обрабатываем вложенные пути типа 'germany/berlin'
+    $slug = $cat_name ? basename( $cat_name ) : '';
+    if ( ! $slug || ! isset( novosti_get_cities()[ $slug ] ) ) return;
+
+    $ex = array();
+    foreach ( array( 'reklama', 'partner', 'afisha' ) as $s ) {
+        $c = get_category_by_slug( $s );
+        if ( $c ) $ex[] = $c->term_id;
+    }
+    if ( $ex ) {
+        $query->set( 'category__not_in', $ex );
+    }
+}
+
+// Родительный падеж для заголовка H1 «Новости <города>»
+function novosti_city_genitive( $slug ) {
+    $map = array(
+        'berlin'      => 'Берлина',
+        'hamburg'     => 'Гамбурга',
+        'munich'      => 'Мюнхена',
+        'cologne'     => 'Кёльна',
+        'frankfurt'   => 'Франкфурта',
+        'stuttgart'   => 'Штутгарта',
+        'duesseldorf' => 'Дюссельдорфа',
+        'leipzig'     => 'Лейпцига',
+        'dortmund'    => 'Дортмунда',
+        'essen'       => 'Эссена',
+    );
+    return isset( $map[ $slug ] ) ? $map[ $slug ] : novosti_get_city_name( $slug );
+}

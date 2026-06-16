@@ -675,3 +675,27 @@ ul { list-style: none; }
   transition: background 0.3s;
 }
 .banner-carousel__dot.is-active { background: #1a1a2e; }
+/* ===== СТРАНИЦА ГОРОДА ===== */
+.city-page {}
+
+.city-hero {
+  padding: 20px 0 12px;
+  border-bottom: 3px solid var(--red);
+  margin-bottom: 20px;
+}
+.city-hero__title {
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--dark);
+  line-height: 1.2;
+}
+.city-hero__sub {
+  font-size: 13px;
+  color: var(--gray-text);
+  margin-top: 4px;
+}
+
+@media (max-width: 600px) {
+  .city-hero__title { font-size: 22px; }
+}
