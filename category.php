@@ -28,12 +28,32 @@ if ( novosti_is_city_category() ) :
   </div>
 
   <?php if ( $paged <= 1 ) :
+    $city_term_id = (int) $city_obj->term_id;
+    $ex_cats      = novosti_get_excluded_cats();
+
     $ad_banner   = novosti_get_ad_banner();
     $city_afisha = novosti_get_city_afisha( $city_slug, 3 );
-    $today_news  = novosti_get_city_latest_news( $city_slug, 6 );
-    $yest_news   = novosti_get_city_yesterday_news( $city_slug, 3 );
-    $today_ids   = wp_list_pluck( $today_news, 'ID' );
-    $yest_ids    = wp_list_pluck( $yest_news,  'ID' );
+
+    $today_news = get_posts( array(
+        'post_type'        => 'post',
+        'post_status'      => 'publish',
+        'posts_per_page'   => 6,
+        'category__in'     => array( $city_term_id ),
+        'category__not_in' => $ex_cats,
+    ) );
+
+    $yest_news = get_posts( array(
+        'post_type'        => 'post',
+        'post_status'      => 'publish',
+        'posts_per_page'   => 3,
+        'category__in'     => array( $city_term_id ),
+        'category__not_in' => $ex_cats,
+        'date_query'       => array( array(
+            'year'  => date( 'Y', strtotime( '-1 day' ) ),
+            'month' => date( 'm', strtotime( '-1 day' ) ),
+            'day'   => date( 'd', strtotime( '-1 day' ) ),
+        ) ),
+    ) );
   ?>
 
   <!-- РЕКЛАМА + АФИША -->
@@ -138,7 +158,7 @@ if ( novosti_is_city_category() ) :
   <div class="section-wrap">
     <div class="section-head">
       <span class="section-head__title"><?php echo esc_html( $today_label ); ?></span>
-      <a class="section-head__link" href="<?php echo esc_url( $city_link ); ?>">Все новости &rarr;</a>
+      <a class="section-head__link" href="<?php echo esc_url( $city_link . 'page/2/' ); ?>">Все новости &rarr;</a>
     </div>
     <hr class="section-divider">
     <div class="news-grid">
@@ -187,6 +207,7 @@ if ( novosti_is_city_category() ) :
   <div class="section-wrap">
     <div class="section-head">
       <span class="section-head__title"><?php echo esc_html( $yest_label ); ?></span>
+      <a class="section-head__link" href="<?php echo esc_url( $city_link . 'page/2/' ); ?>">Все за вчера &rarr;</a>
     </div>
     <hr class="section-divider">
     <div class="news-list">
@@ -227,59 +248,50 @@ if ( novosti_is_city_category() ) :
 
   <?php endif; /* end: $paged <= 1 */ ?>
 
-  <!-- ВСЕ НОВОСТИ (paginated WP main loop, reklama/afisha/partner уже исключены через pre_get_posts) -->
+  <?php if ( $paged > 1 && have_posts() ) : ?>
   <div class="section-wrap">
     <div class="section-head">
       <span class="section-head__title">
-        <?php echo $paged > 1
-          ? 'Новости ' . esc_html( novosti_city_genitive( $city_slug ) ) . ' — стр. ' . $paged
-          : 'Архив новостей — ' . esc_html( $city_ru );
-        ?>
+        Новости <?php echo esc_html( novosti_city_genitive( $city_slug ) ); ?> — стр. <?php echo $paged; ?>
       </span>
     </div>
     <hr class="section-divider">
-
-    <?php if ( have_posts() ) : ?>
-      <div class="news-grid">
-        <?php while ( have_posts() ) : the_post();
-          $cats = get_the_category();
-          $cat  = $cats ? $cats[0] : null;
-        ?>
-        <article class="news-card">
-          <div class="news-card__thumb is-empty">
-            <a href="<?php the_permalink(); ?>">
-              <?php if ( has_post_thumbnail() ) :
-                the_post_thumbnail( 'news-card', array(
-                  'onerror' => "this.style.display='none';this.closest('.news-card__thumb').classList.add('is-empty');"
-                ) );
-              endif; ?>
-            </a>
-          </div>
-          <div class="news-card__body">
-            <?php if ( $cat ) : ?>
-              <div class="news-card__cat">
-                <a href="<?php echo esc_url( get_category_link( $cat->term_id ) ); ?>">
-                  <?php echo esc_html( $cat->name ); ?>
-                </a>
-              </div>
-            <?php endif; ?>
-            <h2 class="news-card__title">
-              <a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
-            </h2>
-            <div class="news-card__time"><?php echo novosti_time_ago(); ?></div>
-          </div>
-        </article>
-        <?php endwhile; ?>
-      </div>
-      <div style="margin-top:20px;">
-        <?php the_posts_pagination( array( 'mid_size' => 2 ) ); ?>
-      </div>
-    <?php else : ?>
-      <p style="color:#888;padding:20px 0;">
-        Новостей ещё нет. Назначьте посту категорию «<?php echo esc_html( $city_slug ); ?>».
-      </p>
-    <?php endif; ?>
+    <div class="news-grid">
+      <?php while ( have_posts() ) : the_post();
+        $cats = get_the_category();
+        $cat  = $cats ? $cats[0] : null;
+      ?>
+      <article class="news-card">
+        <div class="news-card__thumb is-empty">
+          <a href="<?php the_permalink(); ?>">
+            <?php if ( has_post_thumbnail() ) :
+              the_post_thumbnail( 'news-card', array(
+                'onerror' => "this.style.display='none';this.closest('.news-card__thumb').classList.add('is-empty');"
+              ) );
+            endif; ?>
+          </a>
+        </div>
+        <div class="news-card__body">
+          <?php if ( $cat ) : ?>
+            <div class="news-card__cat">
+              <a href="<?php echo esc_url( get_category_link( $cat->term_id ) ); ?>">
+                <?php echo esc_html( $cat->name ); ?>
+              </a>
+            </div>
+          <?php endif; ?>
+          <h2 class="news-card__title">
+            <a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
+          </h2>
+          <div class="news-card__time"><?php echo novosti_time_ago(); ?></div>
+        </div>
+      </article>
+      <?php endwhile; ?>
+    </div>
+    <div style="margin-top:20px;">
+      <?php the_posts_pagination( array( 'mid_size' => 2 ) ); ?>
+    </div>
   </div>
+  <?php endif; ?>
 
 </div>
 </main>

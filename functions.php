@@ -36,7 +36,7 @@ function novosti_setup() {
     add_theme_support( 'automatic-feed-links' );
     add_image_size( 'news-card',     400, 260, true );
     add_image_size( 'news-list',     180, 120, true );
-    add_image_size( 'news-featured', 800, 450, true );
+    add_image_size( 'news-featured', 1200, 675, true );
     register_nav_menus( array('primary'=>'Основное меню','footer'=>'Меню в футере') );
 }
 add_action( 'after_setup_theme', 'novosti_setup' );
@@ -219,6 +219,28 @@ function novosti_source_meta_save( $post_id ) {
 }
 add_action( 'save_post', 'novosti_source_meta_save' );
 
+// ===== ПОЛЕ "ССЫЛКА БАННЕРА" (для записей в рубрике reklama) =====
+function novosti_banner_meta_box() {
+    add_meta_box( 'novosti_banner', '🔗 Ссылка баннера (Реклама)', 'novosti_banner_meta_box_html', 'post', 'side', 'default' );
+}
+add_action( 'add_meta_boxes', 'novosti_banner_meta_box' );
+
+function novosti_banner_meta_box_html( $post ) {
+    wp_nonce_field('novosti_banner_save','novosti_banner_nonce');
+    $link = get_post_meta($post->ID,'_banner_url',true);
+    echo '<p><label><strong>Куда ведёт баннер</strong><br><input type="url" name="_banner_url" value="' . esc_attr($link) . '" placeholder="https://gadanie.in.ua/" style="width:100%"></label></p>';
+    echo '<p style="color:#888;font-size:11px;margin:0;">Работает для записей в рубрике «reklama». Если поле пустое — баннер ведёт на khursenko.agency.</p>';
+}
+
+function novosti_banner_meta_save( $post_id ) {
+    if ( ! isset($_POST['novosti_banner_nonce']) ) return;
+    if ( ! wp_verify_nonce($_POST['novosti_banner_nonce'],'novosti_banner_save') ) return;
+    if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) return;
+    if ( isset($_POST['_banner_url']) )
+        update_post_meta($post_id, '_banner_url', esc_url_raw($_POST['_banner_url']));
+}
+add_action( 'save_post', 'novosti_banner_meta_save' );
+
 // ===== РЕКЛАМА ВНУТРИ ТЕКСТА (после 3-го абзаца) =====
 function novosti_inject_ad_in_content( $content ) {
     if ( ! is_single() ) return $content;
@@ -265,7 +287,7 @@ function novosti_breadcrumbs() {
 
 // ===== ХЕЛПЕРЫ =====
 function novosti_get_ad_banner() {
-    return get_posts( array('post_type'=>'post','posts_per_page'=>3,'category_name'=>'reklama') );
+    return get_posts( array('post_type'=>'post','posts_per_page'=>10,'category_name'=>'reklama') );
 }
 function novosti_get_ad_articles( $count = 2 ) {
     return get_posts( array('post_type'=>'post','posts_per_page'=>$count,'category_name'=>'reklama') );
@@ -337,6 +359,7 @@ function novosti_get_cities() {
         'leipzig'     => 'Лейпциг',
         'dortmund'    => 'Дортмунд',
         'essen'       => 'Эссен',
+        'dresden'     => 'Дрезден',
     );
 }
 
@@ -406,6 +429,15 @@ function novosti_get_city_afisha( $city_slug, $count = 3 ) {
     ) );
 }
 
+// Заголовок вкладки для городских страниц: «Новости Берлина — Новости Германии»
+add_filter( 'document_title_parts', function( $title ) {
+    if ( ! novosti_is_city_category() ) return $title;
+    $obj = get_queried_object();
+    if ( ! $obj ) return $title;
+    $title['title'] = 'Новости ' . novosti_city_genitive( $obj->slug );
+    return $title;
+} );
+
 // Фильтр главного запроса для городских страниц: убирает reklama/partner/afisha
 add_action( 'pre_get_posts', 'novosti_city_query_filter' );
 function novosti_city_query_filter( $query ) {
@@ -439,6 +471,7 @@ function novosti_city_genitive( $slug ) {
         'leipzig'     => 'Лейпцига',
         'dortmund'    => 'Дортмунда',
         'essen'       => 'Эссена',
+        'dresden'     => 'Дрездена',
     );
     return isset( $map[ $slug ] ) ? $map[ $slug ] : novosti_get_city_name( $slug );
 }

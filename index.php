@@ -19,10 +19,13 @@ $afisha        = novosti_get_afisha(3);
       <?php if ( $ad_banner ) { ?>
 
         <div class="banner-carousel">
-          <?php foreach ( $ad_banner as $index => $ad_post ) { ?>
+          <?php foreach ( $ad_banner as $index => $ad_post ) {
+            $banner_url = get_post_meta($ad_post->ID, '_banner_url', true);
+            if ( ! $banner_url ) $banner_url = 'https://khursenko.agency';
+          ?>
             <div class="banner-carousel__slide <?php echo $index === 0 ? 'is-active' : ''; ?>">
               <?php if ( has_post_thumbnail($ad_post->ID) ) { ?>
-                <a href="https://khursenko.agency" target="_blank" rel="nofollow noopener">
+                <a href="<?php echo esc_url($banner_url); ?>" target="_blank" rel="nofollow noopener">
                   <?php echo get_the_post_thumbnail(
                     $ad_post->ID,
                     'medium_large',
@@ -30,9 +33,7 @@ $afisha        = novosti_get_afisha(3);
                   ); ?>
                 </a>
               <?php } else { ?>
-                <a href="https://khursenko.agency" target="_blank" rel="nofollow noopener" style="display:block;width:100%;text-align:center;padding:20px;color:#999;font-size:13px;">
-              <?php echo esc_html($ad_post->post_title); ?>
-              </a>
+                <a href="<?php echo esc_url($banner_url); ?>" target="_blank" rel="nofollow noopener" style="display:block;width:100%;text-align:center;padding:20px;color:#999;font-size:13px;">
                   <?php echo esc_html($ad_post->post_title); ?>
                 </a>
               <?php } ?>
@@ -61,6 +62,7 @@ $afisha        = novosti_get_afisha(3);
 
     </div>
   </div>
+
   <div class="afisha-block">
 
     <div class="afisha-block__header">
@@ -114,7 +116,7 @@ if ( $today_news ) :
 <div class="section-wrap">
   <div class="section-head">
     <span class="section-head__title"><?php echo esc_html($today_label); ?></span>
-    <a class="section-head__link" href="<?php echo esc_url(home_url('/')); ?>">Все новости &rarr;</a>
+    <a class="section-head__link" href="<?php echo esc_url( get_year_link( wp_date('Y') ) ); ?>">Все новости &rarr;</a>
   </div>
 
   <hr class="section-divider">
@@ -223,7 +225,7 @@ if ( $yesterday_news ) :
 <div class="section-wrap">
   <div class="section-head">
     <span class="section-head__title"><?php echo esc_html($yesterday_label); ?></span>
-    <a class="section-head__link" href="#">Все за вчера &rarr;</a>
+    <a class="section-head__link" href="<?php echo esc_url( get_day_link( wp_date('Y', strtotime('-1 day')), wp_date('m', strtotime('-1 day')), wp_date('d', strtotime('-1 day')) ) ); ?>">Все за вчера &rarr;</a>
   </div>
 
   <hr class="section-divider">

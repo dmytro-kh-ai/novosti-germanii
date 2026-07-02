@@ -48,14 +48,9 @@
 
   <?php if ( has_post_thumbnail() ) : ?>
     <div class="single-post__thumb">
-      <?php
-      the_post_thumbnail(
-        'news-featured',
-        array(
-          'onerror' => "this.closest('.single-post__thumb').style.display='none';"
-        )
-      );
-      ?>
+      <?php the_post_thumbnail( 'news-featured', array(
+        'onerror' => "this.closest('.single-post__thumb').style.display='none';"
+      ) ); ?>
     </div>
   <?php endif; ?>
 
