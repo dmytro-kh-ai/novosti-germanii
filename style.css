@@ -657,9 +657,30 @@ ul { list-style: none; }
 }
 
 /* Banner Carousel */
-.banner-carousel { position: relative; overflow: hidden; }
+.banner-carousel {
+  --banner-slot-height: 460px;
+  position: relative;
+  overflow: hidden;
+}
 .banner-carousel__slide { display: none; }
 .banner-carousel__slide.is-active { display: block; }
+.banner-carousel__slide a {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: var(--banner-slot-height);
+  background: #fff;
+  overflow: hidden;
+}
+.banner-carousel__slide img {
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  margin: 0 auto !important;
+}
 .banner-carousel__dots {
   text-align: center;
   padding: 8px 0 4px;
@@ -675,6 +696,14 @@ ul { list-style: none; }
   transition: background 0.3s;
 }
 .banner-carousel__dot.is-active { background: #1a1a2e; }
+
+@media (max-width: 900px) {
+  .banner-carousel { --banner-slot-height: 380px; }
+}
+
+@media (max-width: 600px) {
+  .banner-carousel { --banner-slot-height: 300px; }
+}
 /* ===== СТРАНИЦА ГОРОДА ===== */
 .city-page {}
 
