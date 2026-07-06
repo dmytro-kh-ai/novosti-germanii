@@ -300,7 +300,7 @@ if ( $yesterday_news ) :
 
   <hr class="section-divider">
 
-  <div class="news-grid">
+  <div class="news-list">
     <?php foreach ( $yesterday_news as $post ) :
       setup_postdata($post);
 
@@ -308,18 +308,12 @@ if ( $yesterday_news ) :
       $cat  = $cats ? $cats[0] : null;
     ?>
 
-    <article class="news-card">
-      <div class="news-card__thumb">
+    <div class="news-list-item">
+      <div class="news-list-item__thumb">
         <a href="<?php echo esc_url(get_permalink($post->ID)); ?>">
           <?php
           if ( has_post_thumbnail($post->ID) ) {
-            echo get_the_post_thumbnail(
-              $post->ID,
-              'news-card',
-              array(
-                'onerror' => "this.style.display='none';this.closest('.news-card__thumb').classList.add('is-empty');"
-              )
-            );
+            echo get_the_post_thumbnail($post->ID, 'news-list');
           } else {
             echo '<div style="width:100%;height:100%;background:#e8e8e8;"></div>';
           }
@@ -327,26 +321,26 @@ if ( $yesterday_news ) :
         </a>
       </div>
 
-      <div class="news-card__body">
+      <div>
         <?php if ($cat) : ?>
-          <div class="news-card__cat">
+          <div class="news-list-item__cat">
             <a href="<?php echo esc_url(get_category_link($cat->term_id)); ?>">
               <?php echo esc_html($cat->name); ?>
             </a>
           </div>
         <?php endif; ?>
 
-        <h3 class="news-card__title">
+        <h3 class="news-list-item__title">
           <a href="<?php echo esc_url(get_permalink($post->ID)); ?>">
             <?php echo esc_html(get_the_title($post->ID)); ?>
           </a>
         </h3>
 
-        <div class="news-card__time">
+        <div class="news-list-item__time">
           <?php echo novosti_time_ago($post->ID); ?>
         </div>
       </div>
-    </article>
+    </div>
 
     <?php endforeach; wp_reset_postdata(); ?>
   </div>
