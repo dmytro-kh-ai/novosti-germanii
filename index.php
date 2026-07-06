@@ -107,10 +107,10 @@ $afisha        = novosti_get_afisha(3);
 </div>
 
 <?php
-$today_news = novosti_get_latest_news(6);
+$today_news = novosti_get_common_latest_news(6);
 
 if ( $today_news ) :
-  $today_label = 'Сегодня · ' . wp_date('j F');
+  $today_label = 'Главные новости · ' . wp_date('j F');
 ?>
 
 <div class="section-wrap">
@@ -123,6 +123,76 @@ if ( $today_news ) :
 
   <div class="news-grid">
     <?php foreach ( $today_news as $post ) :
+      setup_postdata($post);
+
+      $cats = get_the_category($post->ID);
+      $cat  = $cats ? $cats[0] : null;
+    ?>
+
+    <article class="news-card">
+      <div class="news-card__thumb">
+        <a href="<?php echo esc_url(get_permalink($post->ID)); ?>">
+          <?php
+          if ( has_post_thumbnail($post->ID) ) {
+            echo get_the_post_thumbnail(
+              $post->ID,
+              'news-card',
+              array(
+                'onerror' => "this.style.display='none';this.closest('.news-card__thumb').classList.add('is-empty');"
+              )
+            );
+          } else {
+            echo '<div style="width:100%;height:100%;background:#e8e8e8;"></div>';
+          }
+          ?>
+        </a>
+      </div>
+
+      <div class="news-card__body">
+        <?php if ($cat) : ?>
+          <div class="news-card__cat">
+            <a href="<?php echo esc_url(get_category_link($cat->term_id)); ?>">
+              <?php echo esc_html($cat->name); ?>
+            </a>
+          </div>
+        <?php endif; ?>
+
+        <h2 class="news-card__title">
+          <a href="<?php echo esc_url(get_permalink($post->ID)); ?>">
+            <?php echo esc_html(get_the_title($post->ID)); ?>
+          </a>
+        </h2>
+
+        <div class="news-card__time">
+          <?php echo novosti_time_ago($post->ID); ?>
+        </div>
+      </div>
+    </article>
+
+    <?php endforeach; wp_reset_postdata(); ?>
+  </div>
+</div>
+
+<?php endif; ?>
+
+<?php
+$city_news = novosti_get_all_city_latest_news(6);
+
+if ( $city_news ) :
+$berlin_cat = get_category_by_slug('berlin');
+$city_link  = $berlin_cat ? get_category_link($berlin_cat->term_id) : '#';
+?>
+
+<div class="section-wrap">
+  <div class="section-head">
+    <span class="section-head__title">Новости городов</span>
+    <a class="section-head__link" href="<?php echo esc_url( $city_link ); ?>">Берлин &rarr;</a>
+  </div>
+
+  <hr class="section-divider">
+
+  <div class="news-grid">
+    <?php foreach ( $city_news as $post ) :
       setup_postdata($post);
 
       $cats = get_the_category($post->ID);
@@ -216,7 +286,7 @@ if ( $today_news ) :
 <?php endif; ?>
 
 <?php
-$yesterday_news = novosti_get_yesterday_news(3);
+$yesterday_news = novosti_get_yesterday_news(6);
 
 if ( $yesterday_news ) :
   $yesterday_label = 'Вчера · ' . wp_date('j F', strtotime('-1 day'));
@@ -230,18 +300,26 @@ if ( $yesterday_news ) :
 
   <hr class="section-divider">
 
-  <div class="news-list">
+  <div class="news-grid">
     <?php foreach ( $yesterday_news as $post ) :
+      setup_postdata($post);
+
       $cats = get_the_category($post->ID);
       $cat  = $cats ? $cats[0] : null;
     ?>
 
-    <div class="news-list-item">
-      <div class="news-list-item__thumb">
+    <article class="news-card">
+      <div class="news-card__thumb">
         <a href="<?php echo esc_url(get_permalink($post->ID)); ?>">
           <?php
           if ( has_post_thumbnail($post->ID) ) {
-            echo get_the_post_thumbnail($post->ID, 'news-list');
+            echo get_the_post_thumbnail(
+              $post->ID,
+              'news-card',
+              array(
+                'onerror' => "this.style.display='none';this.closest('.news-card__thumb').classList.add('is-empty');"
+              )
+            );
           } else {
             echo '<div style="width:100%;height:100%;background:#e8e8e8;"></div>';
           }
@@ -249,28 +327,28 @@ if ( $yesterday_news ) :
         </a>
       </div>
 
-      <div>
+      <div class="news-card__body">
         <?php if ($cat) : ?>
-          <div class="news-list-item__cat">
+          <div class="news-card__cat">
             <a href="<?php echo esc_url(get_category_link($cat->term_id)); ?>">
               <?php echo esc_html($cat->name); ?>
             </a>
           </div>
         <?php endif; ?>
 
-        <h3 class="news-list-item__title">
+        <h3 class="news-card__title">
           <a href="<?php echo esc_url(get_permalink($post->ID)); ?>">
             <?php echo esc_html(get_the_title($post->ID)); ?>
           </a>
         </h3>
 
-        <div class="news-list-item__time">
+        <div class="news-card__time">
           <?php echo novosti_time_ago($post->ID); ?>
         </div>
       </div>
-    </div>
+    </article>
 
-    <?php endforeach; ?>
+    <?php endforeach; wp_reset_postdata(); ?>
   </div>
 </div>
 

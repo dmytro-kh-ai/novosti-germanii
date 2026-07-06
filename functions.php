@@ -295,22 +295,61 @@ function novosti_get_ad_articles( $count = 2 ) {
 function novosti_get_partner_posts( $count = 3 ) {
     return get_posts( array('post_type'=>'post','posts_per_page'=>$count,'category_name'=>'partner') );
 }
-function novosti_get_latest_news( $count = 6 ) {
+
+function novosti_get_special_category_ids() {
     $ex = array();
     foreach ( array('reklama','partner','afisha') as $s ) {
         $c = get_category_by_slug($s);
         if ( $c ) $ex[] = $c->term_id;
     }
+    return $ex;
+}
+
+function novosti_get_city_category_ids() {
+    $ids = array();
+    foreach ( array_keys( novosti_get_cities() ) as $slug ) {
+        $c = get_category_by_slug( $slug );
+        if ( $c ) $ids[] = $c->term_id;
+    }
+    return $ids;
+}
+
+function novosti_get_latest_news( $count = 6 ) {
+    $ex = novosti_get_special_category_ids();
     return get_posts( array('post_type'=>'post','posts_per_page'=>$count,'category__not_in'=>$ex) );
 }
+
+function novosti_get_common_latest_news( $count = 6 ) {
+    $ex = array_merge( novosti_get_special_category_ids(), novosti_get_city_category_ids() );
+    return get_posts( array(
+        'post_type'           => 'post',
+        'post_status'         => 'publish',
+        'posts_per_page'      => $count,
+        'category__not_in'    => $ex,
+        'ignore_sticky_posts' => true,
+        'no_found_rows'       => true,
+    ) );
+}
+
+function novosti_get_all_city_latest_news( $count = 6 ) {
+    $city_ids = novosti_get_city_category_ids();
+    if ( ! $city_ids ) return array();
+    return get_posts( array(
+        'post_type'           => 'post',
+        'post_status'         => 'publish',
+        'posts_per_page'      => $count,
+        'category__in'        => $city_ids,
+        'category__not_in'    => novosti_get_special_category_ids(),
+        'ignore_sticky_posts' => true,
+        'no_found_rows'       => true,
+    ) );
+}
+
 function novosti_get_yesterday_news( $count = 3 ) {
-    $ex = array();
-    foreach ( array('reklama','partner','afisha') as $s ) {
-        $c = get_category_by_slug($s);
-        if ( $c ) $ex[] = $c->term_id;
-    }
+    $ex = novosti_get_special_category_ids();
     return get_posts( array(
         'post_type'        => 'post',
+        'post_status'      => 'publish',
         'posts_per_page'   => $count,
         'date_query'       => array( array(
             'year'  => date('Y', strtotime('-1 day')),
@@ -318,6 +357,8 @@ function novosti_get_yesterday_news( $count = 3 ) {
             'day'   => date('d', strtotime('-1 day')),
         )),
         'category__not_in' => $ex,
+        'ignore_sticky_posts' => true,
+        'no_found_rows'    => true,
     ));
 }
 function novosti_get_afisha( $count = 3 ) {
