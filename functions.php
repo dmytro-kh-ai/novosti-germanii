@@ -311,7 +311,17 @@ function novosti_get_city_category_ids() {
         $c = get_category_by_slug( $slug );
         if ( $c ) $ids[] = $c->term_id;
     }
-    return $ids;
+
+    $city_names = array_merge(
+        array_values( novosti_get_cities() ),
+        array( 'Дрезден', 'Дюссельдорф', 'Кёльн', 'Франкфурт-на-Майне' )
+    );
+    foreach ( $city_names as $name ) {
+        $c = get_term_by( 'name', $name, 'category' );
+        if ( $c && ! is_wp_error( $c ) ) $ids[] = (int) $c->term_id;
+    }
+
+    return array_values( array_unique( array_filter( $ids ) ) );
 }
 
 function novosti_get_latest_news( $count = 6 ) {
@@ -346,7 +356,7 @@ function novosti_get_all_city_latest_news( $count = 6 ) {
 }
 
 function novosti_get_yesterday_news( $count = 3 ) {
-    $ex = novosti_get_special_category_ids();
+    $ex = array_merge( novosti_get_special_category_ids(), novosti_get_city_category_ids() );
     return get_posts( array(
         'post_type'        => 'post',
         'post_status'      => 'publish',
