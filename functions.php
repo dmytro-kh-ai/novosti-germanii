@@ -307,18 +307,70 @@ function novosti_get_special_category_ids() {
 
 function novosti_get_city_category_ids() {
     $ids = array();
-    foreach ( array_keys( novosti_get_cities() ) as $slug ) {
+    $city_slug_aliases = array(
+        'berlin',
+        'hamburg',
+        'munich',
+        'muenchen',
+        'cologne',
+        'koeln',
+        'koln',
+        'keln',
+        'frankfurt',
+        'frankfurt-am-main',
+        'duesseldorf',
+        'dusseldorf',
+        'leipzig',
+        'dortmund',
+        'essen',
+        'dresden',
+        'stuttgart',
+    );
+
+    foreach ( array_unique( array_merge( array_keys( novosti_get_cities() ), $city_slug_aliases ) ) as $slug ) {
         $c = get_category_by_slug( $slug );
         if ( $c ) $ids[] = $c->term_id;
     }
 
     $city_names = array_merge(
         array_values( novosti_get_cities() ),
-        array( 'Дрезден', 'Дюссельдорф', 'Кёльн', 'Франкфурт-на-Майне' )
+        array(
+            'Берлин',
+            'Гамбург',
+            'Мюнхен',
+            'Кельн',
+            'Кёльн',
+            'Франкфурт',
+            'Франкфурт-на-Майне',
+            'Дюссельдорф',
+            'Лейпциг',
+            'Дортмунд',
+            'Эссен',
+            'Дрезден',
+            'Штутгарт',
+        )
     );
     foreach ( $city_names as $name ) {
         $c = get_term_by( 'name', $name, 'category' );
         if ( $c && ! is_wp_error( $c ) ) $ids[] = (int) $c->term_id;
+    }
+
+    $city_name_keys = array();
+    foreach ( $city_names as $name ) {
+        $city_name_keys[] = str_replace( 'ё', 'е', mb_strtolower( $name ) );
+    }
+
+    $all_categories = get_terms( array(
+        'taxonomy'   => 'category',
+        'hide_empty' => false,
+    ) );
+    if ( ! is_wp_error( $all_categories ) ) {
+        foreach ( $all_categories as $category ) {
+            $name_key = str_replace( 'ё', 'е', mb_strtolower( $category->name ) );
+            if ( in_array( $name_key, $city_name_keys, true ) ) {
+                $ids[] = (int) $category->term_id;
+            }
+        }
     }
 
     return array_values( array_unique( array_filter( $ids ) ) );
