@@ -8,8 +8,12 @@
         'items_wrap'     => '%3$s',
         'fallback_cb'    => function() {
           $pages = array(
+            array('url'=>home_url('/o-proekte/'),       'label'=>'О проекте'),
+            array('url'=>home_url('/redakcionnaya-politika/'), 'label'=>'Редполитика'),
+            array('url'=>home_url('/guides/'),          'label'=>'Гайды'),
             array('url'=>home_url('/usloviya/'),        'label'=>'Условия'),
             array('url'=>home_url('/sotrudnichestvo/'), 'label'=>'Сотрудничество'),
+            array('url'=>home_url('/kontakty/'),        'label'=>'Контакты'),
             array('url'=>home_url('/impressum/'),       'label'=>'Impressum'),
             array('url'=>home_url('/datenschutz/'),     'label'=>'Datenschutz'),
           );
