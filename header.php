@@ -15,7 +15,9 @@
     .top-bar__date{font-size:12px;color:#666}
     .top-bar__time{background:#cc0000;color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:3px}
 
-    .site-header{background:#fff;border-bottom:1px solid #e0e0e0;padding:18px 16px 14px;text-align:center}
+    .site-header{background:#fff;border-bottom:1px solid #e0e0e0;padding:18px 16px 14px}
+    .site-header__brand{display:flex;align-items:center;justify-content:center;gap:18px}
+    .site-header__text{display:flex;flex-direction:column;align-items:flex-start;text-align:left}
     .site-header__logo-text{display:block;font-family:'PT Serif',Georgia,serif;font-size:26px;font-weight:700;color:#1a1a2e}
     .site-header__tagline{font-size:13px;color:#cc0000;margin-top:3px}
 
@@ -100,7 +102,10 @@
         margin-bottom:0;
       }
 
-      .site-header__logo-text{font-size:20px}
+      .site-header__brand{justify-content:flex-start;gap:12px}
+      .site-header__text{min-width:0}
+      .site-header__logo-text{font-size:20px;line-height:1.18}
+      .site-header__tagline{font-size:12px;line-height:1.35}
       .site-header__logo img{max-height:56px}
     }
   </style>
@@ -117,14 +122,32 @@
 </div>
 
 <header class="site-header">
-  <a href="<?php echo esc_url(home_url('/')); ?>" class="site-header__logo">
-    <?php if (has_custom_logo()) the_custom_logo(); ?>
-    <span class="site-header__logo-text"><?php bloginfo('name'); ?></span>
-  </a>
+  <div class="site-header__brand">
+    <a href="<?php echo esc_url(home_url('/')); ?>" class="site-header__logo" aria-label="<?php echo esc_attr( get_bloginfo('name') ); ?>">
+      <?php
+      if ( has_custom_logo() ) {
+        $custom_logo_id = get_theme_mod( 'custom_logo' );
+        echo wp_get_attachment_image(
+          $custom_logo_id,
+          'full',
+          false,
+          array(
+            'class' => 'custom-logo',
+            'alt'   => get_bloginfo( 'name' ),
+          )
+        );
+      }
+      ?>
+    </a>
 
-  <?php if (get_bloginfo('description')) : ?>
-    <p class="site-header__tagline"><?php bloginfo('description'); ?></p>
-  <?php endif; ?>
+    <div class="site-header__text">
+    <span class="site-header__logo-text"><?php bloginfo('name'); ?></span>
+
+    <?php if (get_bloginfo('description')) : ?>
+      <p class="site-header__tagline"><?php bloginfo('description'); ?></p>
+    <?php endif; ?>
+    </div>
+  </div>
 </header>
 
 <nav class="site-nav">

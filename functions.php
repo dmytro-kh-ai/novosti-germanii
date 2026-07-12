@@ -325,6 +325,11 @@ function novosti_get_city_category_ids() {
         'essen',
         'dresden',
         'stuttgart',
+        'nuremberg',
+        'nuernberg',
+        'nurnberg',
+        'hannover',
+        'hanover',
     );
 
     foreach ( array_unique( array_merge( array_keys( novosti_get_cities() ), $city_slug_aliases ) ) as $slug ) {
@@ -348,6 +353,8 @@ function novosti_get_city_category_ids() {
             'Эссен',
             'Дрезден',
             'Штутгарт',
+            'Нюрнберг',
+            'Ганновер',
         )
     );
     foreach ( $city_names as $name ) {
