@@ -58,24 +58,6 @@
     <?php the_content(); ?>
   </div>
 
-  <?php
-  $internal_links = novosti_get_internal_link_suggestions( get_the_ID(), 10 );
-  if ( $internal_links ) :
-  ?>
-    <section class="internal-links" aria-label="Материалы по теме">
-      <h2 class="internal-links__title">Читайте также</h2>
-      <ul class="internal-links__list">
-        <?php foreach ( $internal_links as $link_post ) : ?>
-          <li>
-            <a href="<?php echo esc_url( get_permalink( $link_post->ID ) ); ?>">
-              <?php echo esc_html( get_the_title( $link_post->ID ) ); ?>
-            </a>
-          </li>
-        <?php endforeach; ?>
-      </ul>
-    </section>
-  <?php endif; ?>
-
 </article>
 
 <?php
@@ -83,11 +65,9 @@ $cat_ids = wp_get_post_categories(get_the_ID());
 
 $related = get_posts(array(
   'post_type'      => 'post',
-  'posts_per_page' => 6,
+  'posts_per_page' => 3,
   'category__in'   => $cat_ids,
   'post__not_in'   => array(get_the_ID()),
-  'ignore_sticky_posts' => true,
-  'no_found_rows'  => true,
 ));
 ?>
 
