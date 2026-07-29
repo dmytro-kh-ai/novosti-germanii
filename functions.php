@@ -149,6 +149,25 @@ function novosti_exclude_service_terms_from_yoast_sitemap( $url, $type, $object 
 }
 add_filter( 'wpseo_sitemap_entry', 'novosti_exclude_service_terms_from_yoast_sitemap', 10, 3 );
 
+function novosti_get_canonical_url() {
+    if ( is_singular() ) {
+        return get_permalink();
+    }
+
+    if ( is_home() || is_front_page() || is_archive() || is_search() ) {
+        return get_pagenum_link( max( 1, get_query_var( 'paged' ) ) );
+    }
+
+    return '';
+}
+
+function novosti_yoast_canonical( $canonical ) {
+    $url = novosti_get_canonical_url();
+
+    return $url ? $url : $canonical;
+}
+add_filter( 'wpseo_canonical', 'novosti_yoast_canonical' );
+
 // ===== DNS PREFETCH =====
 function novosti_dns_prefetch() {
     echo '<link rel="dns-prefetch" href="//fonts.googleapis.com">' . "\n";
@@ -195,7 +214,7 @@ function novosti_seo_head() {
     } else {
         $title       = is_category() ? single_cat_title('', false) . ' — ' . $site_name : $site_name;
         $description = get_bloginfo('description');
-        $url         = get_pagenum_link();
+        $url         = novosti_get_canonical_url();
         $type        = 'website';
         $image       = get_template_directory_uri() . '/img/og-default.jpg';
         $pub_date    = '';
@@ -206,7 +225,6 @@ function novosti_seo_head() {
     $description = mb_strimwidth( $description, 0, 160, '...' );
     ?>
 <meta name="description" content="<?php echo esc_attr($description); ?>">
-<link rel="canonical" href="<?php echo esc_url($url); ?>">
 <meta property="og:type"        content="<?php echo esc_attr($type); ?>">
 <meta property="og:title"       content="<?php echo esc_attr($title); ?>">
 <meta property="og:description" content="<?php echo esc_attr($description); ?>">
