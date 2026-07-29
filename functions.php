@@ -155,7 +155,9 @@ function novosti_get_canonical_url() {
     }
 
     if ( is_home() || is_front_page() || is_archive() || is_search() ) {
-        return get_pagenum_link( max( 1, get_query_var( 'paged' ) ) );
+        $url = get_pagenum_link( max( 1, get_query_var( 'paged' ) ) );
+
+        return strtok( $url, '?' );
     }
 
     return '';
@@ -228,7 +230,7 @@ function novosti_get_meta_description() {
     }
 
     if ( is_home() || is_front_page() ) {
-        $text = $site_desc ? $site_desc : 'Свежие новости Германии, Европы и мира на русском языке.';
+        $text = 'Свежие новости Германии на русском языке: политика, экономика, миграция, города, транспорт, недвижимость и важные события Европы каждый день.';
         if ( $paged > 1 ) {
             $text .= ' Страница ' . $paged . '.';
         }
