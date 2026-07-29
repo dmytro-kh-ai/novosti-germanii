@@ -108,7 +108,7 @@ function novosti_robots_txt( $output, $public ) {
 
     return implode( "\n", $lines ) . "\n";
 }
-add_filter( 'robots_txt', 'novosti_robots_txt', 20, 2 );
+add_filter( 'robots_txt', 'novosti_robots_txt', 999, 2 );
 
 function novosti_wp_robots( $robots ) {
     $robots['max-image-preview'] = 'large';
