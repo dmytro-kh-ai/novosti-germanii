@@ -168,6 +168,113 @@ function novosti_yoast_canonical( $canonical ) {
 }
 add_filter( 'wpseo_canonical', 'novosti_yoast_canonical' );
 
+function novosti_trim_meta_text( $text, $max = 155 ) {
+    $text = wp_strip_all_tags( $text );
+    $text = preg_replace( '/\s+/u', ' ', $text );
+    $text = trim( $text );
+
+    if ( function_exists( 'mb_strimwidth' ) ) {
+        return mb_strimwidth( $text, 0, $max, '...' );
+    }
+
+    return strlen( $text ) > $max ? substr( $text, 0, $max - 3 ) . '...' : $text;
+}
+
+function novosti_get_meta_description() {
+    $site_name = get_bloginfo( 'name' );
+    $site_desc = get_bloginfo( 'description' );
+    $paged     = max( 1, (int) get_query_var( 'paged' ) );
+
+    if ( is_singular() ) {
+        global $post;
+
+        if ( ! empty( $post->post_excerpt ) ) {
+            return novosti_trim_meta_text( $post->post_excerpt );
+        }
+
+        if ( ! empty( $post->post_content ) ) {
+            return novosti_trim_meta_text( wp_trim_words( $post->post_content, 28, '' ) );
+        }
+
+        return novosti_trim_meta_text( get_the_title() . ' — ' . $site_name );
+    }
+
+    if ( is_category() ) {
+        $term = get_queried_object();
+        if ( $term instanceof WP_Term ) {
+            $description = term_description( $term, 'category' );
+            if ( $description ) {
+                return novosti_trim_meta_text( $description );
+            }
+
+            $text = 'Последние новости по теме «' . $term->name . '»: актуальные события Германии, важные изменения, свежие публикации и полезная информация на русском языке.';
+            if ( $paged > 1 ) {
+                $text .= ' Страница ' . $paged . '.';
+            }
+
+            return novosti_trim_meta_text( $text );
+        }
+    }
+
+    if ( is_author() ) {
+        $author_name = get_the_author_meta( 'display_name', get_query_var( 'author' ) );
+        $text = 'Публикации автора ' . $author_name . ' на сайте ' . $site_name . ': свежие новости Германии, аналитика и полезные материалы.';
+
+        return novosti_trim_meta_text( $text );
+    }
+
+    if ( is_search() ) {
+        return novosti_trim_meta_text( 'Результаты поиска по сайту ' . $site_name . ': новости Германии, темы, города и полезные материалы.' );
+    }
+
+    if ( is_home() || is_front_page() ) {
+        $text = $site_desc ? $site_desc : 'Свежие новости Германии, Европы и мира на русском языке.';
+        if ( $paged > 1 ) {
+            $text .= ' Страница ' . $paged . '.';
+        }
+
+        return novosti_trim_meta_text( $text );
+    }
+
+    if ( is_archive() ) {
+        $title = get_the_archive_title();
+        $text = $title . ': последние новости Германии, свежие публикации, важные события и обновления.';
+        if ( $paged > 1 ) {
+            $text .= ' Страница ' . $paged . '.';
+        }
+
+        return novosti_trim_meta_text( $text );
+    }
+
+    return novosti_trim_meta_text( $site_desc ? $site_desc : $site_name );
+}
+
+function novosti_yoast_metadesc( $description ) {
+    $generated = novosti_get_meta_description();
+
+    return $generated ? $generated : $description;
+}
+add_filter( 'wpseo_metadesc', 'novosti_yoast_metadesc' );
+
+function novosti_yoast_title( $title ) {
+    if ( is_singular() ) {
+        $post_title = wp_strip_all_tags( get_the_title() );
+
+        if ( function_exists( 'mb_strlen' ) && mb_strlen( $post_title ) < 25 ) {
+            return $post_title . ' — новости Германии';
+        }
+
+        if ( function_exists( 'mb_strlen' ) && mb_strlen( $post_title ) > 65 ) {
+            return novosti_trim_meta_text( $post_title, 62 );
+        }
+
+        return $post_title;
+    }
+
+    return $title;
+}
+add_filter( 'wpseo_title', 'novosti_yoast_title' );
+
 // ===== DNS PREFETCH =====
 function novosti_dns_prefetch() {
     echo '<link rel="dns-prefetch" href="//fonts.googleapis.com">' . "\n";
@@ -194,14 +301,7 @@ function novosti_seo_head() {
     if ( is_singular() ) {
         global $post;
         $title       = get_the_title();
-        // Безопасно получаем описание
-        $description = '';
-        if ( ! empty($post->post_excerpt) ) {
-            $description = $post->post_excerpt;
-        } elseif ( ! empty($post->post_content) ) {
-            $description = wp_trim_words( $post->post_content, 30, '' );
-        }
-        $description = wp_strip_all_tags( $description );
+        $description = novosti_get_meta_description();
         $url         = get_permalink();
         $type        = 'article';
         $image       = has_post_thumbnail()
@@ -213,7 +313,7 @@ function novosti_seo_head() {
         $cat_name    = ! empty($cats) ? $cats[0]->name : '';
     } else {
         $title       = is_category() ? single_cat_title('', false) . ' — ' . $site_name : $site_name;
-        $description = get_bloginfo('description');
+        $description = novosti_get_meta_description();
         $url         = novosti_get_canonical_url();
         $type        = 'website';
         $image       = get_template_directory_uri() . '/img/og-default.jpg';
@@ -222,9 +322,8 @@ function novosti_seo_head() {
         $cat_name    = '';
     }
 
-    $description = mb_strimwidth( $description, 0, 160, '...' );
+    $description = novosti_trim_meta_text( $description );
     ?>
-<meta name="description" content="<?php echo esc_attr($description); ?>">
 <meta property="og:type"        content="<?php echo esc_attr($type); ?>">
 <meta property="og:title"       content="<?php echo esc_attr($title); ?>">
 <meta property="og:description" content="<?php echo esc_attr($description); ?>">
