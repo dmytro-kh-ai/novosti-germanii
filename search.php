@@ -7,10 +7,10 @@
 
 <div class="section-wrap">
   <div class="section-head">
-    <span class="section-head__title">
+    <h1 class="section-head__title">
       <?php if (have_posts()) echo 'Результаты поиска: «' . get_search_query() . '»';
       else echo 'По запросу «' . get_search_query() . '» ничего не найдено'; ?>
-    </span>
+    </h1>
   </div>
   <hr class="section-divider">
 

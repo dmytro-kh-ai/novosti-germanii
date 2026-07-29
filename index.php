@@ -3,6 +3,8 @@
 <main class="site-main">
 <div class="container">
 
+<h1 class="screen-reader-text">Новости Германии</h1>
+
 <?php
 $ad_banner     = novosti_get_ad_banner();
 $partner_posts = novosti_get_partner_posts(3);

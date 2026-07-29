@@ -307,14 +307,14 @@ else : /* ====== Обычная категория — стандартный в
 
 <div class="section-wrap">
   <div class="section-head">
-    <span class="section-head__title">
+    <h1 class="section-head__title">
       <?php
       if ( is_category() )  echo single_cat_title( '', false );
       elseif ( is_tag() )   echo 'Тег: ' . single_tag_title( '', false );
       elseif ( is_date() )  echo get_the_date( 'j F Y' );
       else                  the_archive_title();
       ?>
-    </span>
+    </h1>
   </div>
   <hr class="section-divider">
 

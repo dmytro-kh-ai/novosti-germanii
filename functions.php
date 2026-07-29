@@ -658,6 +658,16 @@ add_filter('the_content', function($content){
     );
 });
 
+add_filter( 'the_content', function( $content ) {
+    if ( ! is_singular( 'post' ) ) return $content;
+
+    return preg_replace(
+        array( '/<h3(\s[^>]*)?>/i', '/<\/h3>/i' ),
+        array( '<h2$1>', '</h2>' ),
+        $content
+    );
+}, 8 );
+
 // ===== ГОРОДА =====
 function novosti_get_cities() {
     return array(
