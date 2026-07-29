@@ -66,6 +66,89 @@ add_action( 'wp_enqueue_scripts', function() {
     wp_dequeue_style( 'global-styles' );
 }, 100 );
 
+// ===== ИНДЕКСАЦИЯ =====
+function novosti_get_noindex_category_slugs() {
+    return array( 'reklama', 'partner' );
+}
+
+function novosti_is_noindex_category() {
+    if ( ! is_category() ) return false;
+
+    $term = get_queried_object();
+    if ( ! $term || empty( $term->slug ) ) return false;
+
+    return in_array( $term->slug, novosti_get_noindex_category_slugs(), true );
+}
+
+function novosti_robots_txt( $output, $public ) {
+    if ( '0' === (string) $public ) {
+        return $output;
+    }
+
+    $lines = array(
+        'User-agent: *',
+        'Disallow: /wp-admin/',
+        'Allow: /wp-admin/admin-ajax.php',
+        'Disallow: /wp-login.php',
+        'Disallow: /xmlrpc.php',
+        'Disallow: /?s=',
+        'Disallow: /*?s=',
+        'Disallow: /*&s=',
+        'Disallow: /*?replytocom=',
+        'Disallow: /*&replytocom=',
+        'Disallow: /*?preview=',
+        'Disallow: /*&preview=',
+        'Disallow: /*?attachment_id=',
+        'Disallow: /*&attachment_id=',
+        'Disallow: /topics/reklama/',
+        'Disallow: /topics/partner/',
+        '',
+        'Sitemap: ' . home_url( '/sitemap_index.xml' ),
+    );
+
+    return implode( "\n", $lines ) . "\n";
+}
+add_filter( 'robots_txt', 'novosti_robots_txt', 20, 2 );
+
+function novosti_wp_robots( $robots ) {
+    $robots['max-image-preview'] = 'large';
+
+    if ( is_search() || is_preview() || novosti_is_noindex_category() ) {
+        unset( $robots['index'] );
+        $robots['noindex'] = true;
+        $robots['follow']  = true;
+    }
+
+    return $robots;
+}
+add_filter( 'wp_robots', 'novosti_wp_robots' );
+
+function novosti_yoast_robots( $robots ) {
+    if ( is_search() || is_preview() || novosti_is_noindex_category() ) {
+        return 'noindex, follow, max-image-preview:large';
+    }
+
+    if ( is_string( $robots ) && $robots && strpos( $robots, 'max-image-preview' ) === false ) {
+        $robots .= ', max-image-preview:large';
+    }
+
+    return $robots;
+}
+add_filter( 'wpseo_robots', 'novosti_yoast_robots' );
+
+function novosti_exclude_service_terms_from_yoast_sitemap( $url, $type, $object ) {
+    if (
+        $object instanceof WP_Term
+        && $object->taxonomy === 'category'
+        && in_array( $object->slug, novosti_get_noindex_category_slugs(), true )
+    ) {
+        return false;
+    }
+
+    return $url;
+}
+add_filter( 'wpseo_sitemap_entry', 'novosti_exclude_service_terms_from_yoast_sitemap', 10, 3 );
+
 // ===== DNS PREFETCH =====
 function novosti_dns_prefetch() {
     echo '<link rel="dns-prefetch" href="//fonts.googleapis.com">' . "\n";
