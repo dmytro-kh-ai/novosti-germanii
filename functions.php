@@ -170,6 +170,91 @@ function novosti_yoast_canonical( $canonical ) {
 }
 add_filter( 'wpseo_canonical', 'novosti_yoast_canonical' );
 
+// ===== SEO: URL HYGIENE =====
+function novosti_transliterate_slug_text( $text ) {
+    $map = array(
+        'а'=>'a','б'=>'b','в'=>'v','г'=>'g','д'=>'d','е'=>'e','ё'=>'e','ж'=>'zh','з'=>'z','и'=>'i','й'=>'j',
+        'к'=>'k','л'=>'l','м'=>'m','н'=>'n','о'=>'o','п'=>'p','р'=>'r','с'=>'s','т'=>'t','у'=>'u','ф'=>'f',
+        'х'=>'h','ц'=>'c','ч'=>'ch','ш'=>'sh','щ'=>'shh','ъ'=>'','ы'=>'y','ь'=>'','э'=>'e','ю'=>'yu','я'=>'ya',
+        'ä'=>'ae','ö'=>'oe','ü'=>'ue','ß'=>'ss',
+    );
+
+    $text = function_exists( 'mb_strtolower' ) ? mb_strtolower( $text, 'UTF-8' ) : strtolower( $text );
+    $text = strtr( $text, $map );
+    $text = remove_accents( $text );
+
+    return $text;
+}
+
+function novosti_make_clean_slug( $text, $max_words = 8, $max_length = 78 ) {
+    $text = novosti_transliterate_slug_text( wp_strip_all_tags( $text ) );
+    $text = preg_replace( '/\bseo[-\s_]*zagolovok\b/i', '', $text );
+    $text = preg_replace( '/[^a-z0-9]+/i', '-', $text );
+    $text = trim( strtolower( $text ), '-' );
+
+    if ( ! $text ) return '';
+
+    $words = array_values( array_filter( explode( '-', $text ) ) );
+    $words = array_slice( $words, 0, $max_words );
+    $slug  = implode( '-', $words );
+
+    if ( strlen( $slug ) > $max_length ) {
+        $slug = substr( $slug, 0, $max_length );
+        $slug = preg_replace( '/-[^-]*$/', '', $slug );
+        $slug = trim( $slug, '-' );
+    }
+
+    return $slug;
+}
+
+function novosti_sanitize_title_for_slug( $title, $raw_title = '', $context = 'display' ) {
+    if ( $context !== 'save' ) return $title;
+
+    $source = $raw_title ? $raw_title : $title;
+    $slug   = novosti_make_clean_slug( $source );
+
+    return $slug ? $slug : $title;
+}
+add_filter( 'sanitize_title', 'novosti_sanitize_title_for_slug', 9, 3 );
+
+function novosti_clean_public_url_redirect() {
+    if ( is_admin() || wp_doing_ajax() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) return;
+    if ( ! isset( $_SERVER['REQUEST_METHOD'] ) || $_SERVER['REQUEST_METHOD'] !== 'GET' ) return;
+    if ( empty( $_SERVER['REQUEST_URI'] ) ) return;
+
+    $request_uri = wp_unslash( $_SERVER['REQUEST_URI'] );
+    $parts       = wp_parse_url( $request_uri );
+    $path        = isset( $parts['path'] ) ? $parts['path'] : '/';
+    $query       = array();
+
+    if ( ! empty( $parts['query'] ) ) {
+        wp_parse_str( $parts['query'], $query );
+    }
+
+    $tracking_params = array(
+        'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
+        'fbclid', 'gclid', 'gbraid', 'wbraid', 'yclid', 'mc_cid', 'mc_eid',
+    );
+
+    $clean_query = $query;
+    foreach ( $tracking_params as $param ) {
+        unset( $clean_query[ $param ] );
+    }
+
+    $clean_path = strtolower( $path );
+
+    if ( $clean_path === $path && $clean_query === $query ) return;
+
+    $target = home_url( $clean_path );
+    if ( ! empty( $clean_query ) ) {
+        $target = add_query_arg( $clean_query, $target );
+    }
+
+    wp_safe_redirect( $target, 301 );
+    exit;
+}
+add_action( 'template_redirect', 'novosti_clean_public_url_redirect', 1 );
+
 function novosti_trim_meta_text( $text, $max = 155 ) {
     $text = wp_strip_all_tags( $text );
     $text = preg_replace( '/\s+/u', ' ', $text );
