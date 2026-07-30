@@ -459,6 +459,18 @@ function novosti_get_schema_logo_url() {
     return '';
 }
 
+function novosti_get_social_image_url( $post_id = 0 ) {
+    if ( $post_id && has_post_thumbnail( $post_id ) ) {
+        $image = get_the_post_thumbnail_url( $post_id, 'news-featured' );
+        if ( $image ) return $image;
+    }
+
+    $logo_url = novosti_get_schema_logo_url();
+    if ( $logo_url ) return $logo_url;
+
+    return get_template_directory_uri() . '/screenshot.png';
+}
+
 function novosti_seo_head() {
     $site_name = get_bloginfo('name');
     $site_url  = home_url('/');
@@ -469,9 +481,7 @@ function novosti_seo_head() {
         $description = novosti_get_meta_description();
         $url         = get_permalink();
         $type        = 'article';
-        $image       = has_post_thumbnail()
-            ? get_the_post_thumbnail_url( $post->ID, 'news-featured' )
-            : get_template_directory_uri() . '/img/og-default.jpg';
+        $image       = novosti_get_social_image_url( $post->ID );
         $pub_date    = get_the_date( 'c' );
         $mod_date    = get_the_modified_date( 'c' );
         $cats        = get_the_category();
@@ -483,7 +493,7 @@ function novosti_seo_head() {
         $description = novosti_get_meta_description();
         $url         = novosti_get_canonical_url();
         $type        = 'website';
-        $image       = get_template_directory_uri() . '/img/og-default.jpg';
+        $image       = novosti_get_social_image_url();
         $pub_date    = '';
         $mod_date    = '';
         $cat_name    = '';
@@ -494,6 +504,7 @@ function novosti_seo_head() {
     $description = novosti_trim_meta_text( $description );
     $logo_url    = novosti_get_schema_logo_url();
     ?>
+<?php if ( ! defined( 'WPSEO_VERSION' ) ) : ?>
 <meta property="og:type"        content="<?php echo esc_attr($type); ?>">
 <meta property="og:title"       content="<?php echo esc_attr($title); ?>">
 <meta property="og:description" content="<?php echo esc_attr($description); ?>">
@@ -505,6 +516,7 @@ function novosti_seo_head() {
 <meta name="twitter:title"       content="<?php echo esc_attr($title); ?>">
 <meta name="twitter:description" content="<?php echo esc_attr($description); ?>">
 <meta name="twitter:image"       content="<?php echo esc_url($image); ?>">
+<?php endif; ?>
 <?php if ( is_singular('post') && $pub_date ) : ?>
 <meta property="article:published_time" content="<?php echo esc_attr($pub_date); ?>">
 <meta property="article:modified_time"  content="<?php echo esc_attr($mod_date); ?>">
