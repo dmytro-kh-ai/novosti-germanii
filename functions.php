@@ -113,7 +113,7 @@ add_filter( 'robots_txt', 'novosti_robots_txt', 999, 2 );
 function novosti_wp_robots( $robots ) {
     $robots['max-image-preview'] = 'large';
 
-    if ( is_search() || is_preview() || novosti_is_noindex_category() ) {
+    if ( is_search() || is_preview() || is_tag() || novosti_is_noindex_category() ) {
         unset( $robots['index'] );
         $robots['noindex'] = true;
         $robots['follow']  = true;
@@ -124,7 +124,7 @@ function novosti_wp_robots( $robots ) {
 add_filter( 'wp_robots', 'novosti_wp_robots' );
 
 function novosti_yoast_robots( $robots ) {
-    if ( is_search() || is_preview() || novosti_is_noindex_category() ) {
+    if ( is_search() || is_preview() || is_tag() || novosti_is_noindex_category() ) {
         return 'noindex, follow, max-image-preview:large';
     }
 
@@ -137,6 +137,13 @@ function novosti_yoast_robots( $robots ) {
 add_filter( 'wpseo_robots', 'novosti_yoast_robots' );
 
 function novosti_exclude_service_terms_from_yoast_sitemap( $url, $type, $object ) {
+    if (
+        $object instanceof WP_Term
+        && $object->taxonomy === 'post_tag'
+    ) {
+        return false;
+    }
+
     if (
         $object instanceof WP_Term
         && $object->taxonomy === 'category'
