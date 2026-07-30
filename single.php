@@ -61,14 +61,20 @@
 </article>
 
 <?php
-$cat_ids = wp_get_post_categories(get_the_ID());
-
-$related = get_posts(array(
-  'post_type'      => 'post',
-  'posts_per_page' => 3,
-  'category__in'   => $cat_ids,
-  'post__not_in'   => array(get_the_ID()),
-));
+$current_post_id = get_the_ID();
+$related         = novosti_get_related_posts( $current_post_id, 6 );
+$related_ids     = wp_list_pluck( $related, 'ID' );
+$category_more   = novosti_get_more_from_primary_category( $current_post_id, 4, $related_ids );
+$link_block_ids  = array_merge( array( $current_post_id ), $related_ids, wp_list_pluck( $category_more, 'ID' ) );
+$latest_more     = get_posts( array(
+  'post_type'           => 'post',
+  'post_status'         => 'publish',
+  'posts_per_page'      => 4,
+  'category__not_in'    => novosti_get_special_category_ids(),
+  'post__not_in'        => array_values( array_unique( array_map( 'intval', $link_block_ids ) ) ),
+  'ignore_sticky_posts' => true,
+  'no_found_rows'       => true,
+) );
 ?>
 
 <?php if ($related) : ?>
@@ -76,7 +82,7 @@ $related = get_posts(array(
 <div class="section-wrap related-news">
 
   <div class="section-head">
-    <span class="section-head__title">Похожие новости</span>
+    <h2 class="section-head__title">Похожие новости</h2>
   </div>
 
   <hr class="section-divider">
@@ -151,6 +157,11 @@ $related = get_posts(array(
 </div>
 
 <?php endif; ?>
+
+<?php
+novosti_render_link_list( 'Ещё по теме', $category_more, 'internal-links--topic' );
+novosti_render_link_list( 'Последние новости Германии', $latest_more, 'internal-links--latest' );
+?>
 
 <?php endwhile; endif; ?>
 

@@ -556,21 +556,91 @@ add_filter( 'the_content', 'novosti_inject_ad_in_content' );
 // ===== ХЛЕБНЫЕ КРОШКИ =====
 function novosti_breadcrumbs() {
     if ( is_front_page() ) return;
+    $items = novosti_get_breadcrumb_items();
+
     echo '<nav class="breadcrumbs" aria-label="Хлебные крошки"><div class="container"><span>';
-    echo '<a href="' . esc_url(home_url('/')) . '">Главная</a>';
-    if ( is_category() ) {
-        echo ' → <span>' . single_cat_title('', false) . '</span>';
-    } elseif ( is_single() ) {
-        $cats = get_the_category();
-        if ( $cats ) echo ' → <a href="' . esc_url(get_category_link($cats[0]->term_id)) . '">' . esc_html($cats[0]->name) . '</a>';
-        echo ' → <span>' . get_the_title() . '</span>';
-    } elseif ( is_page() ) {
-        echo ' → <span>' . get_the_title() . '</span>';
-    } elseif ( is_search() ) {
-        echo ' → <span>Поиск: ' . get_search_query() . '</span>';
+
+    foreach ( $items as $index => $item ) {
+        if ( $index > 0 ) echo ' → ';
+
+        if ( ! empty( $item['url'] ) && $index < count( $items ) - 1 ) {
+            echo '<a href="' . esc_url( $item['url'] ) . '">' . esc_html( $item['name'] ) . '</a>';
+        } else {
+            echo '<span>' . esc_html( $item['name'] ) . '</span>';
+        }
     }
+
     echo '</span></div></nav>';
 }
+
+function novosti_get_breadcrumb_items() {
+    $items = array(
+        array(
+            'name' => 'Главная',
+            'url'  => home_url( '/' ),
+        ),
+    );
+
+    if ( is_category() ) {
+        $items[] = array(
+            'name' => single_cat_title( '', false ),
+            'url'  => '',
+        );
+    } elseif ( is_single() ) {
+        $cats = get_the_category();
+        if ( $cats ) {
+            $items[] = array(
+                'name' => $cats[0]->name,
+                'url'  => get_category_link( $cats[0]->term_id ),
+            );
+        }
+
+        $items[] = array(
+            'name' => get_the_title(),
+            'url'  => '',
+        );
+    } elseif ( is_page() ) {
+        $items[] = array(
+            'name' => get_the_title(),
+            'url'  => '',
+        );
+    } elseif ( is_search() ) {
+        $items[] = array(
+            'name' => 'Поиск: ' . get_search_query(),
+            'url'  => '',
+        );
+    } elseif ( is_archive() ) {
+        $items[] = array(
+            'name' => get_the_archive_title(),
+            'url'  => '',
+        );
+    }
+
+    return $items;
+}
+
+function novosti_breadcrumb_schema() {
+    if ( is_front_page() ) return;
+
+    $items = array();
+    foreach ( novosti_get_breadcrumb_items() as $index => $item ) {
+        $items[] = array(
+            '@type'    => 'ListItem',
+            'position' => $index + 1,
+            'name'     => $item['name'],
+            'item'     => ! empty( $item['url'] ) ? $item['url'] : novosti_get_canonical_url(),
+        );
+    }
+
+    if ( count( $items ) < 2 ) return;
+
+    echo '<script type="application/ld+json">' . wp_json_encode( array(
+        '@context'        => 'https://schema.org',
+        '@type'           => 'BreadcrumbList',
+        'itemListElement' => $items,
+    ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . '</script>' . "\n";
+}
+add_action( 'wp_head', 'novosti_breadcrumb_schema', 20 );
 
 // ===== ХЕЛПЕРЫ =====
 function novosti_get_ad_banner() {
@@ -716,6 +786,58 @@ function novosti_get_yesterday_news( $count = 3 ) {
         'ignore_sticky_posts' => true,
         'no_found_rows'    => true,
     ));
+}
+
+function novosti_get_related_posts( $post_id, $count = 6 ) {
+    $cat_ids = wp_get_post_categories( $post_id );
+    if ( ! $cat_ids ) return array();
+
+    return get_posts( array(
+        'post_type'           => 'post',
+        'post_status'         => 'publish',
+        'posts_per_page'      => $count,
+        'category__in'        => $cat_ids,
+        'category__not_in'    => novosti_get_special_category_ids(),
+        'post__not_in'        => array( $post_id ),
+        'ignore_sticky_posts' => true,
+        'no_found_rows'       => true,
+    ) );
+}
+
+function novosti_get_more_from_primary_category( $post_id, $count = 4, $exclude_ids = array() ) {
+    $cats = get_the_category( $post_id );
+    if ( ! $cats ) return array();
+
+    $exclude_ids[] = $post_id;
+
+    return get_posts( array(
+        'post_type'           => 'post',
+        'post_status'         => 'publish',
+        'posts_per_page'      => $count,
+        'category__in'        => array( $cats[0]->term_id ),
+        'category__not_in'    => novosti_get_special_category_ids(),
+        'post__not_in'        => array_values( array_unique( array_map( 'intval', $exclude_ids ) ) ),
+        'ignore_sticky_posts' => true,
+        'no_found_rows'       => true,
+    ) );
+}
+
+function novosti_render_link_list( $title, $posts, $class = '' ) {
+    if ( ! $posts ) return;
+    ?>
+    <section class="internal-links <?php echo esc_attr( $class ); ?>">
+      <h2 class="internal-links__title"><?php echo esc_html( $title ); ?></h2>
+      <ul class="internal-links__list">
+        <?php foreach ( $posts as $item ) : ?>
+          <li>
+            <a href="<?php echo esc_url( get_permalink( $item->ID ) ); ?>">
+              <?php echo esc_html( get_the_title( $item->ID ) ); ?>
+            </a>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    </section>
+    <?php
 }
 function novosti_get_afisha( $count = 3 ) {
     return get_posts( array('post_type'=>'post','posts_per_page'=>$count,'category_name'=>'afisha','orderby'=>'meta_value','meta_key'=>'_event_date','order'=>'ASC') );
