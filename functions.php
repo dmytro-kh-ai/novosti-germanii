@@ -294,7 +294,7 @@ function novosti_get_meta_description() {
                 return novosti_trim_meta_text( $description );
             }
 
-            $text = 'Последние новости по теме «' . $term->name . '»: актуальные события Германии, важные изменения, свежие публикации и полезная информация на русском языке.';
+            $text = novosti_get_category_seo_text( $term );
             if ( $paged > 1 ) {
                 $text .= ' Страница ' . $paged . '.';
             }
@@ -356,6 +356,25 @@ function novosti_yoast_title( $title ) {
         }
 
         return $post_title;
+    }
+
+    if ( is_category() ) {
+        $term  = get_queried_object();
+        $paged = max( 1, (int) get_query_var( 'paged' ) );
+
+        if ( $term instanceof WP_Term ) {
+            if ( novosti_is_city_category() ) {
+                $title = 'Новости ' . novosti_city_genitive( $term->slug ) . ' сегодня';
+            } else {
+                $title = novosti_get_category_title( $term );
+            }
+
+            if ( $paged > 1 ) {
+                $title .= ' — страница ' . $paged;
+            }
+
+            return novosti_trim_meta_text( $title, 65 );
+        }
     }
 
     return $title;
@@ -786,6 +805,117 @@ function novosti_get_yesterday_news( $count = 3 ) {
         'ignore_sticky_posts' => true,
         'no_found_rows'    => true,
     ));
+}
+
+function novosti_get_category_title( $term ) {
+    if ( ! ( $term instanceof WP_Term ) ) return '';
+
+    $map = array(
+        'politika'       => 'Политика Германии',
+        'ekonomika'      => 'Экономика Германии',
+        'energetika'     => 'Энергетика Германии',
+        'nedvizhimost'   => 'Недвижимость в Германии',
+        'immigratsiya'   => 'Иммиграция в Германию',
+        'deutsche-bahn'  => 'Новости Deutsche Bahn',
+        'burgergeld'     => 'Bürgergeld в Германии',
+        'rabota'         => 'Работа в Германии',
+        'obrazovanie'    => 'Образование в Германии',
+        'avtomobili'     => 'Автомобили в Германии',
+        'biznes'         => 'Бизнес в Германии',
+        'tehnologii'     => 'Технологии в Германии',
+        'obshhestvo'     => 'Общество Германии',
+        'proisshestviya' => 'Происшествия в Германии',
+    );
+
+    if ( isset( $map[ $term->slug ] ) ) {
+        return $map[ $term->slug ];
+    }
+
+    return $term->name . ' — новости Германии';
+}
+
+function novosti_get_category_seo_text( $term ) {
+    if ( ! ( $term instanceof WP_Term ) ) return '';
+
+    $cities = novosti_get_cities();
+    if ( isset( $cities[ $term->slug ] ) ) {
+        $city = novosti_get_city_name( $term->slug );
+        return 'На странице собраны последние новости города ' . $city . ': транспорт, жильё, городская политика, происшествия, события, работа служб и изменения, которые важны для жителей и гостей. Раздел помогает быстро следить за локальной повесткой и находить материалы по теме в одном месте.';
+    }
+
+    $map = array(
+        'politika'       => 'В рубрике «Политика» публикуются ключевые события и решения, которые формируют внутреннюю и внешнюю повестку Германии. Здесь собраны новости о правительстве, партиях, выборах, законах, заявлениях политиков и решениях, влияющих на жителей страны.',
+        'ekonomika'      => 'Рубрика «Экономика» посвящена финансовой и деловой повестке Германии: рынку труда, инфляции, налогам, промышленности, бизнесу, банкам и решениям правительства. Материалы помогают следить за изменениями, которые влияют на доходы, цены и компании.',
+        'energetika'     => 'В разделе «Энергетика» собраны новости о ценах на электричество и газ, переходе на возобновляемые источники, сетях, отоплении, субсидиях и решениях властей. Здесь удобно отслеживать всё, что влияет на счета домохозяйств и бизнес.',
+        'nedvizhimost'   => 'Раздел «Недвижимость» рассказывает о рынке жилья в Германии: аренде, покупке квартир и домов, ипотеке, строительстве, коммунальных расходах и правах жильцов. Здесь публикуются новости, полезные арендаторам, владельцам и тем, кто планирует переезд.',
+        'immigratsiya'   => 'В рубрике «Иммиграция» собраны новости о правилах въезда, ВНЖ, гражданстве, интеграции, визах, работе ведомств и изменениях миграционной политики Германии. Раздел помогает отслеживать решения, важные для иностранцев и новых жителей страны.',
+        'deutsche-bahn'  => 'Новости Deutsche Bahn: изменения расписания, задержки поездов, забастовки, ремонтные работы, новые маршруты, билеты, S-Bahn, региональный транспорт и инфраструктура. Раздел полезен всем, кто регулярно пользуется поездками по Германии.',
+        'burgergeld'     => 'Раздел Bürgergeld посвящён социальным выплатам в Германии: решениям Jobcenter, правилам получения помощи, санкциям, реформам, размерам выплат и практическим изменениям для получателей пособий.',
+        'rabota'         => 'В рубрике «Работа» публикуются новости о рынке труда Германии, зарплатах, вакансиях, условиях занятости, правах работников, дефиците кадров и изменениях для работодателей и сотрудников.',
+        'obrazovanie'    => 'Раздел «Образование» собирает новости о школах, университетах, детских садах, профессиональном обучении, экзаменах, цифровизации и реформах образовательной системы Германии.',
+        'avtomobili'     => 'В рубрике «Автомобили» собраны новости о правилах дорожного движения, штрафах, техосмотре, электромобилях, налогах, страховании, парковке и изменениях для водителей в Германии.',
+        'biznes'         => 'Раздел «Бизнес» освещает новости компаний, предпринимательства, инвестиций, банкротств, регулирования, торговли и решений, которые влияют на деловую среду Германии.',
+        'tehnologii'     => 'В рубрике «Технологии» публикуются новости о цифровизации, искусственном интеллекте, стартапах, IT-компаниях, кибербезопасности, связи и технологической политике Германии.',
+        'obshhestvo'     => 'Раздел «Общество» собирает материалы о повседневной жизни в Германии: социальных изменениях, семье, здоровье, потребителях, городских инициативах, культуре и важных общественных дискуссиях.',
+        'proisshestviya' => 'В рубрике «Происшествия» публикуются новости о чрезвычайных ситуациях, расследованиях, работе полиции и спасательных служб, авариях, пожарах и других событиях в Германии.',
+    );
+
+    if ( isset( $map[ $term->slug ] ) ) {
+        return $map[ $term->slug ];
+    }
+
+    return 'Последние новости по теме «' . $term->name . '»: актуальные события Германии, важные изменения, свежие публикации и полезная информация на русском языке. Раздел регулярно обновляется и помогает быстро найти материалы по выбранной теме.';
+}
+
+function novosti_render_category_seo_intro( $term ) {
+    if ( ! ( $term instanceof WP_Term ) ) return;
+    if ( max( 1, (int) get_query_var( 'paged' ) ) > 1 ) return;
+
+    $text = novosti_get_category_seo_text( $term );
+    if ( ! $text ) return;
+    ?>
+    <div class="category-seo">
+      <p><?php echo esc_html( $text ); ?></p>
+    </div>
+    <?php
+}
+
+function novosti_render_category_links( $current_term = null ) {
+    $slugs = array(
+        'politika',
+        'ekonomika',
+        'deutsche-bahn',
+        'nedvizhimost',
+        'immigratsiya',
+        'burgergeld',
+        'berlin',
+        'hamburg',
+        'munich',
+        'cologne',
+        'frankfurt',
+        'duesseldorf',
+    );
+
+    $links = array();
+    foreach ( $slugs as $slug ) {
+        $term = get_category_by_slug( $slug );
+        if ( ! $term ) continue;
+        if ( $current_term instanceof WP_Term && (int) $current_term->term_id === (int) $term->term_id ) continue;
+
+        $links[] = $term;
+    }
+
+    if ( ! $links ) return;
+    ?>
+    <nav class="category-links" aria-label="Связанные разделы">
+      <span class="category-links__label">Связанные разделы:</span>
+      <?php foreach ( $links as $term ) : ?>
+        <a href="<?php echo esc_url( get_category_link( $term->term_id ) ); ?>">
+          <?php echo esc_html( $term->name ); ?>
+        </a>
+      <?php endforeach; ?>
+    </nav>
+    <?php
 }
 
 function novosti_get_related_posts( $post_id, $count = 6 ) {

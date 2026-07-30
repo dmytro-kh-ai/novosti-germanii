@@ -27,6 +27,11 @@ if ( novosti_is_city_category() ) :
     <p class="city-hero__sub">Последние новости и события — <?php echo esc_html( $city_ru ); ?></p>
   </div>
 
+  <?php
+  novosti_render_category_seo_intro( $city_obj );
+  novosti_render_category_links( $city_obj );
+  ?>
+
   <?php if ( $paged <= 1 ) :
     $city_term_id = (int) $city_obj->term_id;
     $ex_cats      = novosti_get_excluded_cats();
@@ -251,9 +256,9 @@ if ( novosti_is_city_category() ) :
   <?php if ( $paged > 1 && have_posts() ) : ?>
   <div class="section-wrap">
     <div class="section-head">
-      <h1 class="section-head__title">
+      <h2 class="section-head__title">
         Новости <?php echo esc_html( novosti_city_genitive( $city_slug ) ); ?> — стр. <?php echo $paged; ?>
-      </h1>
+      </h2>
     </div>
     <hr class="section-divider">
     <div class="news-grid">
@@ -316,6 +321,15 @@ else : /* ====== Обычная категория — стандартный в
       ?>
     </h1>
   </div>
+
+  <?php
+  $category_obj = get_queried_object();
+  if ( $category_obj instanceof WP_Term ) {
+    novosti_render_category_seo_intro( $category_obj );
+    novosti_render_category_links( $category_obj );
+  }
+  ?>
+
   <hr class="section-divider">
 
   <?php if ( have_posts() ) : ?>
