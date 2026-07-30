@@ -251,9 +251,9 @@ if ( novosti_is_city_category() ) :
   <?php if ( $paged > 1 && have_posts() ) : ?>
   <div class="section-wrap">
     <div class="section-head">
-      <span class="section-head__title">
+      <h1 class="section-head__title">
         Новости <?php echo esc_html( novosti_city_genitive( $city_slug ) ); ?> — стр. <?php echo $paged; ?>
-      </span>
+      </h1>
     </div>
     <hr class="section-divider">
     <div class="news-grid">

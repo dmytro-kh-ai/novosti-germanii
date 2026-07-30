@@ -917,6 +917,17 @@ function novosti_get_excluded_cats() {
     return $ex;
 }
 
+function novosti_home_pagination_query_filter( $query ) {
+    if ( is_admin() || ! $query->is_main_query() || ! $query->is_home() ) return;
+    if ( (int) $query->get( 'paged' ) < 2 ) return;
+
+    $exclude = novosti_get_special_category_ids();
+    if ( $exclude ) {
+        $query->set( 'category__not_in', $exclude );
+    }
+}
+add_action( 'pre_get_posts', 'novosti_home_pagination_query_filter' );
+
 function novosti_get_city_latest_news( $city_slug, $count = 6 ) {
     $city_cat = get_category_by_slug( $city_slug );
     if ( ! $city_cat ) return array();

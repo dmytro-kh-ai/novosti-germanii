@@ -6,6 +6,72 @@
 <h1 class="screen-reader-text">Новости Германии</h1>
 
 <?php
+$paged = max( 1, (int) get_query_var( 'paged' ) );
+
+if ( $paged > 1 ) :
+?>
+
+<div class="section-wrap">
+  <div class="section-head">
+    <h2 class="section-head__title">Новости Германии — страница <?php echo esc_html( $paged ); ?></h2>
+  </div>
+
+  <hr class="section-divider">
+
+  <?php if ( have_posts() ) : ?>
+    <div class="news-grid">
+      <?php while ( have_posts() ) : the_post();
+        $cats = get_the_category();
+        $cat  = $cats ? $cats[0] : null;
+      ?>
+
+      <article class="news-card">
+        <div class="news-card__thumb is-empty">
+          <a href="<?php the_permalink(); ?>">
+            <?php if ( has_post_thumbnail() ) :
+              the_post_thumbnail( 'news-card', array(
+                'onerror' => "this.style.display='none';this.closest('.news-card__thumb').classList.add('is-empty');"
+              ) );
+            endif; ?>
+          </a>
+        </div>
+
+        <div class="news-card__body">
+          <?php if ( $cat ) : ?>
+            <div class="news-card__cat">
+              <a href="<?php echo esc_url( get_category_link( $cat->term_id ) ); ?>">
+                <?php echo esc_html( $cat->name ); ?>
+              </a>
+            </div>
+          <?php endif; ?>
+
+          <h2 class="news-card__title">
+            <a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
+          </h2>
+
+          <div class="news-card__time"><?php echo novosti_time_ago(); ?></div>
+        </div>
+      </article>
+
+      <?php endwhile; ?>
+    </div>
+
+    <div style="margin-top:20px;">
+      <?php the_posts_pagination( array( 'mid_size' => 2 ) ); ?>
+    </div>
+  <?php else : ?>
+    <p style="color:#888;padding:20px 0;">Записи не найдены.</p>
+  <?php endif; ?>
+</div>
+
+</div>
+</main>
+
+<?php get_footer(); return; ?>
+
+<?php endif; ?>
+
+<?php
 $ad_banner     = novosti_get_ad_banner();
 $partner_posts = novosti_get_partner_posts(3);
 $afisha        = novosti_get_afisha(3);
