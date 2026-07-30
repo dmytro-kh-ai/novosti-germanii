@@ -45,9 +45,48 @@ add_action( 'after_setup_theme', 'novosti_setup' );
 function novosti_add_lazy( $attr, $attachment, $size ) {
     $attr['loading']  = 'lazy';
     $attr['decoding'] = 'async';
+
+    if ( empty( $attr['alt'] ) ) {
+        $alt = get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true );
+
+        if ( ! $alt && ! empty( $attachment->post_parent ) ) {
+            $alt = get_the_title( $attachment->post_parent );
+        }
+
+        if ( ! $alt ) {
+            $alt = $attachment->post_title;
+        }
+
+        if ( $alt ) {
+            $attr['alt'] = wp_strip_all_tags( $alt );
+        }
+    }
+
+    if ( empty( $attr['title'] ) && ! empty( $attr['alt'] ) ) {
+        $attr['title'] = $attr['alt'];
+    }
+
+    if ( empty( $attr['sizes'] ) ) {
+        if ( $size === 'news-card' ) {
+            $attr['sizes'] = '(max-width: 600px) 100vw, (max-width: 900px) 50vw, 400px';
+        } elseif ( $size === 'news-list' ) {
+            $attr['sizes'] = '180px';
+        } elseif ( $size === 'news-featured' ) {
+            $attr['sizes'] = '(max-width: 1200px) 100vw, 1200px';
+        }
+    }
+
     return $attr;
 }
 add_filter( 'wp_get_attachment_image_attributes', 'novosti_add_lazy', 10, 3 );
+
+function novosti_allow_modern_image_uploads( $mimes ) {
+    $mimes['webp'] = 'image/webp';
+    $mimes['avif'] = 'image/avif';
+
+    return $mimes;
+}
+add_filter( 'upload_mimes', 'novosti_allow_modern_image_uploads' );
 
 // ===== ЧИСТИМ <head> =====
 remove_action( 'wp_head', 'wp_generator' );
