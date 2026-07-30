@@ -446,6 +446,19 @@ add_filter( 'script_loader_tag', 'novosti_defer_scripts', 10, 3 );
 add_filter( 'wp_revisions_to_keep', function($n, $p) { return 3; }, 10, 2 );
 
 // ===== SEO: OPEN GRAPH + META =====
+function novosti_get_schema_logo_url() {
+    $custom_logo_id = get_theme_mod( 'custom_logo' );
+    if ( $custom_logo_id ) {
+        $logo = wp_get_attachment_image_url( $custom_logo_id, 'full' );
+        if ( $logo ) return $logo;
+    }
+
+    $site_icon = get_site_icon_url( 512 );
+    if ( $site_icon ) return $site_icon;
+
+    return '';
+}
+
 function novosti_seo_head() {
     $site_name = get_bloginfo('name');
     $site_url  = home_url('/');
@@ -463,6 +476,8 @@ function novosti_seo_head() {
         $mod_date    = get_the_modified_date( 'c' );
         $cats        = get_the_category();
         $cat_name    = ! empty($cats) ? $cats[0]->name : '';
+        $author_id   = (int) get_the_author_meta( 'ID' );
+        $author_name = get_the_author_meta( 'display_name', $author_id );
     } else {
         $title       = is_category() ? single_cat_title('', false) . ' — ' . $site_name : $site_name;
         $description = novosti_get_meta_description();
@@ -472,9 +487,12 @@ function novosti_seo_head() {
         $pub_date    = '';
         $mod_date    = '';
         $cat_name    = '';
+        $author_id   = 0;
+        $author_name = '';
     }
 
     $description = novosti_trim_meta_text( $description );
+    $logo_url    = novosti_get_schema_logo_url();
     ?>
 <meta property="og:type"        content="<?php echo esc_attr($type); ?>">
 <meta property="og:title"       content="<?php echo esc_attr($title); ?>">
@@ -490,21 +508,57 @@ function novosti_seo_head() {
 <?php if ( is_singular('post') && $pub_date ) : ?>
 <meta property="article:published_time" content="<?php echo esc_attr($pub_date); ?>">
 <meta property="article:modified_time"  content="<?php echo esc_attr($mod_date); ?>">
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "NewsArticle",
-  "headline": <?php echo json_encode($title); ?>,
-  "description": <?php echo json_encode($description); ?>,
-  "url": <?php echo json_encode($url); ?>,
-  "datePublished": <?php echo json_encode($pub_date); ?>,
-  "dateModified": <?php echo json_encode($mod_date); ?>,
-  "image": {"@type":"ImageObject","url":<?php echo json_encode($image); ?>,"width":1200,"height":630},
-  "publisher": {"@type":"Organization","name":<?php echo json_encode($site_name); ?>,"url":<?php echo json_encode($site_url); ?>},
-  "author": {"@type":"Organization","name":<?php echo json_encode($site_name); ?>},
-  "inLanguage": "ru"
+<?php
+$publisher = array(
+    '@type' => 'Organization',
+    '@id'   => home_url( '/#organization' ),
+    'name'  => $site_name,
+    'url'   => $site_url,
+);
+
+if ( $logo_url ) {
+    $publisher['logo'] = array(
+        '@type' => 'ImageObject',
+        '@id'   => home_url( '/#logo' ),
+        'url'   => $logo_url,
+    );
 }
-</script>
+
+$article_schema = array(
+    '@context'            => 'https://schema.org',
+    '@type'               => array( 'NewsArticle', 'Article' ),
+    '@id'                 => trailingslashit( $url ) . '#newsarticle',
+    'headline'            => $title,
+    'description'         => $description,
+    'url'                 => $url,
+    'mainEntityOfPage'    => array(
+        '@type' => 'WebPage',
+        '@id'   => $url,
+    ),
+    'datePublished'       => $pub_date,
+    'dateModified'        => $mod_date,
+    'image'               => array(
+        '@type'  => 'ImageObject',
+        '@id'    => trailingslashit( $url ) . '#primaryimage',
+        'url'    => $image,
+        'width'  => 1200,
+        'height' => 675,
+    ),
+    'author'              => array(
+        '@type' => 'Person',
+        '@id'   => $author_id ? get_author_posts_url( $author_id ) . '#author' : home_url( '/#author' ),
+        'name'  => $author_name ? $author_name : $site_name,
+    ),
+    'publisher'           => $publisher,
+    'isAccessibleForFree' => true,
+    'inLanguage'          => 'ru-RU',
+);
+
+if ( $cat_name ) {
+    $article_schema['articleSection'] = $cat_name;
+}
+?>
+<script type="application/ld+json"><?php echo wp_json_encode( $article_schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ); ?></script>
 <?php endif; ?>
 <?php if ( is_home() || is_front_page() ) : ?>
 <script type="application/ld+json">
@@ -1033,6 +1087,12 @@ function novosti_widgets_init() {
 add_action( 'widgets_init', 'novosti_widgets_init' );
 
 // ===== СКРЫВАТЬ БИТЫЕ КАРТИНКИ В ТЕКСТЕ =====
+add_filter( 'the_content', function( $content ) {
+    if ( ! is_singular( 'post' ) ) return $content;
+
+    return preg_replace( '#<script[^>]+type=["\']application/ld\+json["\'][^>]*>.*?</script>#is', '', $content );
+}, 6 );
+
 add_filter('the_content', function($content){
     return preg_replace(
         '/<img(?![^>]*onerror)([^>]*)>/i',
