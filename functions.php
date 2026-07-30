@@ -274,7 +274,15 @@ function novosti_clean_public_url_redirect() {
         'fbclid', 'gclid', 'gbraid', 'wbraid', 'yclid', 'mc_cid', 'mc_eid',
     );
 
-    $clean_query = $query;
+    $allowed_query_params = array( 's', 'paged', 'page' );
+    $clean_query          = $query;
+
+    foreach ( array_keys( $clean_query ) as $param ) {
+        if ( ! in_array( sanitize_key( $param ), $allowed_query_params, true ) ) {
+            unset( $clean_query[ $param ] );
+        }
+    }
+
     foreach ( $tracking_params as $param ) {
         unset( $clean_query[ $param ] );
     }
