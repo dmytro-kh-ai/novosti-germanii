@@ -80,6 +80,32 @@ function novosti_is_noindex_category() {
     return in_array( $term->slug, novosti_get_noindex_category_slugs(), true );
 }
 
+function novosti_has_noindex_query_params() {
+    if ( empty( $_GET ) ) return false;
+
+    $allowed = array( 's', 'paged', 'page' );
+
+    foreach ( array_keys( $_GET ) as $key ) {
+        if ( ! in_array( sanitize_key( $key ), $allowed, true ) ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function novosti_is_noindex_archive_or_filter() {
+    return (
+        is_search()
+        || is_preview()
+        || is_tag()
+        || is_author()
+        || is_date()
+        || novosti_is_noindex_category()
+        || novosti_has_noindex_query_params()
+    );
+}
+
 function novosti_robots_txt( $output, $public ) {
     if ( '0' === (string) $public ) {
         return $output;
@@ -113,7 +139,7 @@ add_filter( 'robots_txt', 'novosti_robots_txt', 999, 2 );
 function novosti_wp_robots( $robots ) {
     $robots['max-image-preview'] = 'large';
 
-    if ( is_search() || is_preview() || is_tag() || novosti_is_noindex_category() ) {
+    if ( novosti_is_noindex_archive_or_filter() ) {
         unset( $robots['index'] );
         $robots['noindex'] = true;
         $robots['follow']  = true;
@@ -124,7 +150,7 @@ function novosti_wp_robots( $robots ) {
 add_filter( 'wp_robots', 'novosti_wp_robots' );
 
 function novosti_yoast_robots( $robots ) {
-    if ( is_search() || is_preview() || is_tag() || novosti_is_noindex_category() ) {
+    if ( novosti_is_noindex_archive_or_filter() ) {
         return 'noindex, follow, max-image-preview:large';
     }
 
@@ -137,6 +163,10 @@ function novosti_yoast_robots( $robots ) {
 add_filter( 'wpseo_robots', 'novosti_yoast_robots' );
 
 function novosti_exclude_service_terms_from_yoast_sitemap( $url, $type, $object ) {
+    if ( $object instanceof WP_User ) {
+        return false;
+    }
+
     if (
         $object instanceof WP_Term
         && $object->taxonomy === 'post_tag'
@@ -155,6 +185,7 @@ function novosti_exclude_service_terms_from_yoast_sitemap( $url, $type, $object 
     return $url;
 }
 add_filter( 'wpseo_sitemap_entry', 'novosti_exclude_service_terms_from_yoast_sitemap', 10, 3 );
+add_filter( 'wpseo_sitemap_exclude_author', '__return_true' );
 
 function novosti_get_canonical_url() {
     if ( is_singular() ) {
