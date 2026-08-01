@@ -181,6 +181,7 @@ function novosti_robots_txt( $output, $public ) {
         'Disallow: /topics/partner/',
         '',
         'Sitemap: ' . home_url( '/sitemap_index.xml' ),
+        'Sitemap: ' . home_url( '/news-sitemap.xml' ),
     );
 
     return implode( "\n", $lines ) . "\n";
@@ -237,6 +238,54 @@ function novosti_exclude_service_terms_from_yoast_sitemap( $url, $type, $object 
 }
 add_filter( 'wpseo_sitemap_entry', 'novosti_exclude_service_terms_from_yoast_sitemap', 10, 3 );
 add_filter( 'wpseo_sitemap_exclude_author', '__return_true' );
+
+function novosti_render_news_sitemap() {
+    if ( empty( $_SERVER['REQUEST_URI'] ) ) return;
+
+    $path = parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH );
+    if ( untrailingslashit( $path ) !== '/news-sitemap.xml' ) return;
+
+    $posts = get_posts( array(
+        'post_type'           => 'post',
+        'post_status'         => 'publish',
+        'posts_per_page'      => 1000,
+        'category__not_in'    => novosti_get_special_category_ids(),
+        'date_query'          => array(
+            array(
+                'after'     => '2 days ago',
+                'inclusive' => true,
+            ),
+        ),
+        'orderby'             => 'date',
+        'order'               => 'DESC',
+        'ignore_sticky_posts' => true,
+        'no_found_rows'       => true,
+    ) );
+
+    status_header( 200 );
+    header( 'Content-Type: application/xml; charset=' . get_bloginfo( 'charset' ), true );
+
+    echo '<?xml version="1.0" encoding="' . esc_attr( get_bloginfo( 'charset' ) ) . '"?>' . "\n";
+    echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">' . "\n";
+
+    foreach ( $posts as $post ) {
+        echo "  <url>\n";
+        echo '    <loc>' . esc_url( get_permalink( $post->ID ) ) . "</loc>\n";
+        echo "    <news:news>\n";
+        echo "      <news:publication>\n";
+        echo '        <news:name>' . esc_html( get_bloginfo( 'name' ) ) . "</news:name>\n";
+        echo "        <news:language>ru</news:language>\n";
+        echo "      </news:publication>\n";
+        echo '      <news:publication_date>' . esc_html( get_the_date( DATE_W3C, $post->ID ) ) . "</news:publication_date>\n";
+        echo '      <news:title>' . esc_html( get_the_title( $post->ID ) ) . "</news:title>\n";
+        echo "    </news:news>\n";
+        echo "  </url>\n";
+    }
+
+    echo "</urlset>\n";
+    exit;
+}
+add_action( 'template_redirect', 'novosti_render_news_sitemap', 0 );
 
 function novosti_get_canonical_url() {
     if ( is_singular() ) {
@@ -574,6 +623,7 @@ function novosti_seo_head() {
         $cat_name    = ! empty($cats) ? $cats[0]->name : '';
         $author_id   = (int) get_the_author_meta( 'ID' );
         $author_name = get_the_author_meta( 'display_name', $author_id );
+        $author_url  = $author_id ? get_author_posts_url( $author_id ) : home_url( '/' );
     } else {
         $title       = is_category() ? single_cat_title('', false) . ' — ' . $site_name : $site_name;
         $description = novosti_get_meta_description();
@@ -585,6 +635,7 @@ function novosti_seo_head() {
         $cat_name    = '';
         $author_id   = 0;
         $author_name = '';
+        $author_url  = '';
     }
 
     $description = novosti_trim_meta_text( $description );
@@ -622,6 +673,25 @@ if ( $logo_url ) {
     );
 }
 
+$image_schema = array(
+    '@type' => 'ImageObject',
+    '@id'   => trailingslashit( $url ) . '#primaryimage',
+    'url'   => $image,
+);
+
+if ( is_singular( 'post' ) && has_post_thumbnail() ) {
+    $image_data = wp_get_attachment_image_src( get_post_thumbnail_id(), 'news-featured' );
+    if ( $image_data ) {
+        $image_schema['width']  = (int) $image_data[1];
+        $image_schema['height'] = (int) $image_data[2];
+    }
+}
+
+if ( empty( $image_schema['width'] ) || empty( $image_schema['height'] ) ) {
+    $image_schema['width']  = 1200;
+    $image_schema['height'] = 675;
+}
+
 $article_schema = array(
     '@context'            => 'https://schema.org',
     '@type'               => array( 'NewsArticle', 'Article' ),
@@ -635,17 +705,12 @@ $article_schema = array(
     ),
     'datePublished'       => $pub_date,
     'dateModified'        => $mod_date,
-    'image'               => array(
-        '@type'  => 'ImageObject',
-        '@id'    => trailingslashit( $url ) . '#primaryimage',
-        'url'    => $image,
-        'width'  => 1200,
-        'height' => 675,
-    ),
+    'image'               => $image_schema,
     'author'              => array(
         '@type' => 'Person',
         '@id'   => $author_id ? get_author_posts_url( $author_id ) . '#author' : home_url( '/#author' ),
         'name'  => $author_name ? $author_name : $site_name,
+        'url'   => $author_url,
     ),
     'publisher'           => $publisher,
     'isAccessibleForFree' => true,

@@ -12,6 +12,10 @@
 
   $source  = get_post_meta(get_the_ID(), '_source_name', true);
   $src_url = get_post_meta(get_the_ID(), '_source_url', true);
+  $published_iso = get_the_date( DATE_W3C );
+  $modified_iso  = get_the_modified_date( DATE_W3C );
+  $published_text = get_the_date( 'd F Y, H:i' );
+  $modified_text  = get_the_modified_date( 'd F Y, H:i' );
 
 ?>
 
@@ -30,7 +34,21 @@
   </h1>
 
   <div class="single-post__meta">
-    <?php echo get_the_date('d F Y'); ?> · <?php the_author(); ?>
+    Опубликовано:
+    <time datetime="<?php echo esc_attr( $published_iso ); ?>">
+      <?php echo esc_html( $published_text ); ?>
+    </time>
+    · Автор:
+    <a href="<?php echo esc_url( get_author_posts_url( get_the_author_meta( 'ID' ) ) ); ?>" rel="author">
+      <?php the_author(); ?>
+    </a>
+
+    <?php if ( $modified_iso !== $published_iso ) : ?>
+      · Обновлено:
+      <time datetime="<?php echo esc_attr( $modified_iso ); ?>">
+        <?php echo esc_html( $modified_text ); ?>
+      </time>
+    <?php endif; ?>
 
     <?php if ($source) : ?>
       · Источник:
