@@ -154,10 +154,25 @@ function novosti_get_noindex_category_slugs() {
     );
 }
 
+function novosti_get_category_slug_aliases() {
+    return array(
+        'бюргергельд' => 'burgergeld',
+        'кёльн'       => 'cologne',
+        'кельн'       => 'cologne',
+        'дрезден'     => 'dresden',
+        'ганновер'    => 'hannover',
+        'нюрнберг'    => 'nuremberg',
+    );
+}
+
 function novosti_is_service_or_duplicate_category_term( $term ) {
     if ( ! ( $term instanceof WP_Term ) || $term->taxonomy !== 'category' ) return false;
 
     if ( in_array( $term->slug, novosti_get_noindex_category_slugs(), true ) ) {
+        return true;
+    }
+
+    if ( isset( novosti_get_category_slug_aliases()[ $term->slug ] ) ) {
         return true;
     }
 
@@ -261,6 +276,23 @@ function novosti_wp_robots( $robots ) {
     return $robots;
 }
 add_filter( 'wp_robots', 'novosti_wp_robots' );
+
+function novosti_redirect_duplicate_category_archives() {
+    if ( ! is_category() ) return;
+
+    $term = get_queried_object();
+    if ( ! ( $term instanceof WP_Term ) ) return;
+
+    $aliases = novosti_get_category_slug_aliases();
+    if ( empty( $aliases[ $term->slug ] ) ) return;
+
+    $target = get_category_by_slug( $aliases[ $term->slug ] );
+    if ( ! $target ) return;
+
+    wp_safe_redirect( get_category_link( $target->term_id ), 301 );
+    exit;
+}
+add_action( 'template_redirect', 'novosti_redirect_duplicate_category_archives', 0 );
 
 function novosti_yoast_robots( $robots ) {
     global $novosti_eeat_page;
@@ -1531,6 +1563,70 @@ function novosti_render_category_seo_intro( $term ) {
     <?php
 }
 
+function novosti_get_topic_cluster_slugs() {
+    return array(
+        'politika',
+        'ekonomika',
+        'energetika',
+        'immigratsiya',
+        'rabota',
+        'nedvizhimost',
+        'burgergeld',
+        'proisshestviya',
+        'avtomobili',
+        'obrazovanie',
+        'biznes',
+        'tehnologii',
+        'obshhestvo',
+        'deutsche-bahn',
+    );
+}
+
+function novosti_get_city_cluster_slugs() {
+    return array_keys( novosti_get_cities() );
+}
+
+function novosti_get_category_terms_by_slugs( $slugs, $current_term = null ) {
+    $terms = array();
+
+    foreach ( $slugs as $slug ) {
+        $term = get_category_by_slug( $slug );
+        if ( ! $term ) continue;
+        if ( $current_term instanceof WP_Term && (int) $current_term->term_id === (int) $term->term_id ) continue;
+        if ( novosti_is_service_or_duplicate_category_term( $term ) ) continue;
+
+        $terms[] = $term;
+    }
+
+    return $terms;
+}
+
+function novosti_render_site_structure_links( $current_term = null ) {
+    $groups = array(
+        'Темы'  => novosti_get_category_terms_by_slugs( novosti_get_topic_cluster_slugs(), $current_term ),
+        'Города' => novosti_get_category_terms_by_slugs( novosti_get_city_cluster_slugs(), $current_term ),
+    );
+
+    $groups = array_filter( $groups );
+    if ( ! $groups ) return;
+    ?>
+    <div class="site-clusters" aria-label="Структура разделов сайта">
+      <?php foreach ( $groups as $label => $terms ) : ?>
+        <nav class="site-clusters__group" aria-label="<?php echo esc_attr( $label ); ?>">
+          <span class="site-clusters__label"><?php echo esc_html( $label ); ?></span>
+          <div class="site-clusters__links">
+            <?php foreach ( $terms as $term ) : ?>
+              <a href="<?php echo esc_url( get_category_link( $term->term_id ) ); ?>">
+                <?php echo esc_html( $term->name ); ?>
+              </a>
+            <?php endforeach; ?>
+          </div>
+        </nav>
+      <?php endforeach; ?>
+    </div>
+    <?php
+}
+
 function novosti_render_category_links( $current_term = null ) {
     $slugs = array(
         'politika',
@@ -1547,14 +1643,7 @@ function novosti_render_category_links( $current_term = null ) {
         'duesseldorf',
     );
 
-    $links = array();
-    foreach ( $slugs as $slug ) {
-        $term = get_category_by_slug( $slug );
-        if ( ! $term ) continue;
-        if ( $current_term instanceof WP_Term && (int) $current_term->term_id === (int) $term->term_id ) continue;
-
-        $links[] = $term;
-    }
+    $links = novosti_get_category_terms_by_slugs( $slugs, $current_term );
 
     if ( ! $links ) return;
     ?>
@@ -1676,6 +1765,7 @@ function novosti_get_cities() {
         'dortmund'    => 'Дортмунд',
         'essen'       => 'Эссен',
         'dresden'     => 'Дрезден',
+        'hannover'    => 'Ганновер',
     );
 }
 
@@ -1799,6 +1889,7 @@ function novosti_city_genitive( $slug ) {
         'dortmund'    => 'Дортмунда',
         'essen'       => 'Эссена',
         'dresden'     => 'Дрездена',
+        'hannover'    => 'Ганновера',
     );
     return isset( $map[ $slug ] ) ? $map[ $slug ] : novosti_get_city_name( $slug );
 }

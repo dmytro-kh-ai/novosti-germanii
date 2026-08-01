@@ -397,6 +397,44 @@ ul { list-style: none; }
 }
 .category-links a:hover { border-color: var(--red); color: var(--red); }
 
+/* ===== SITE STRUCTURE CLUSTERS ===== */
+.section-wrap--clusters { padding-bottom: 12px; }
+.site-clusters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.site-clusters__group {
+  display: grid;
+  gap: 8px;
+}
+.site-clusters__label {
+  color: var(--gray-text);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.site-clusters__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.site-clusters__links a {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: #333;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 5px 9px;
+  font-size: 12px;
+  background: var(--white);
+}
+.site-clusters__links a:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
+
 /* ===== NEWS GRID (6 сегодня) ===== */
 .news-grid {
   display: grid;
@@ -659,6 +697,7 @@ ul { list-style: none; }
 
   /* Сетка новостей — 1 колонка на мобиле */
   .news-grid { grid-template-columns: 1fr; gap: 10px; }
+  .site-clusters { grid-template-columns: 1fr; }
   .news-card__thumb { height: 180px; }
   .news-card__title { font-size: 16px; -webkit-line-clamp: 2; }
   .news-card__time { font-size: 13px; }

@@ -305,6 +305,16 @@ $city_link  = $berlin_cat ? get_category_link($berlin_cat->term_id) : '#';
 
 <?php endif; ?>
 
+<div class="section-wrap section-wrap--clusters">
+  <div class="section-head">
+    <span class="section-head__title">Разделы сайта</span>
+  </div>
+
+  <hr class="section-divider">
+
+  <?php novosti_render_site_structure_links(); ?>
+</div>
+
 <?php if ( $partner_posts ) : ?>
 
 <div class="partner-block">
