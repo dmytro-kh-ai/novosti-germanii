@@ -117,6 +117,22 @@ add_action( 'wp_enqueue_scripts', function() {
     wp_dequeue_style( 'global-styles' );
 }, 100 );
 
+// ===== SECURITY HEADERS =====
+function novosti_security_headers() {
+    if ( headers_sent() ) return;
+
+    header( 'X-Content-Type-Options: nosniff' );
+    header( 'X-Frame-Options: SAMEORIGIN' );
+    header( 'Referrer-Policy: strict-origin-when-cross-origin' );
+    header( 'Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()' );
+    header( 'Content-Security-Policy: upgrade-insecure-requests' );
+
+    if ( is_ssl() ) {
+        header( 'Strict-Transport-Security: max-age=86400' );
+    }
+}
+add_action( 'send_headers', 'novosti_security_headers', 20 );
+
 // ===== ИНДЕКСАЦИЯ =====
 function novosti_get_noindex_category_slugs() {
     return array(
@@ -305,6 +321,7 @@ function novosti_render_news_sitemap() {
 
     status_header( 200 );
     header( 'Content-Type: application/xml; charset=' . get_bloginfo( 'charset' ), true );
+    header( 'X-Robots-Tag: noindex, follow', true );
 
     echo '<?xml version="1.0" encoding="' . esc_attr( get_bloginfo( 'charset' ) ) . '"?>' . "\n";
     echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">' . "\n";
@@ -353,6 +370,7 @@ function novosti_render_image_sitemap() {
 
     status_header( 200 );
     header( 'Content-Type: application/xml; charset=' . get_bloginfo( 'charset' ), true );
+    header( 'X-Robots-Tag: noindex, follow', true );
 
     echo '<?xml version="1.0" encoding="' . esc_attr( get_bloginfo( 'charset' ) ) . '"?>' . "\n";
     echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">' . "\n";
