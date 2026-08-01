@@ -206,6 +206,7 @@ function novosti_robots_txt( $output, $public ) {
         '',
         'Sitemap: ' . home_url( '/sitemap_index.xml' ),
         'Sitemap: ' . home_url( '/news-sitemap.xml' ),
+        'Sitemap: ' . home_url( '/image-sitemap.xml' ),
     );
 
     return implode( "\n", $lines ) . "\n";
@@ -326,6 +327,53 @@ function novosti_render_news_sitemap() {
     exit;
 }
 add_action( 'template_redirect', 'novosti_render_news_sitemap', 0 );
+
+function novosti_render_image_sitemap() {
+    if ( empty( $_SERVER['REQUEST_URI'] ) ) return;
+
+    $path = parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH );
+    if ( untrailingslashit( $path ) !== '/image-sitemap.xml' ) return;
+
+    $posts = get_posts( array(
+        'post_type'           => 'post',
+        'post_status'         => 'publish',
+        'posts_per_page'      => 1000,
+        'category__not_in'    => novosti_get_special_category_ids(),
+        'meta_query'          => array(
+            array(
+                'key'     => '_thumbnail_id',
+                'compare' => 'EXISTS',
+            ),
+        ),
+        'orderby'             => 'modified',
+        'order'               => 'DESC',
+        'ignore_sticky_posts' => true,
+        'no_found_rows'       => true,
+    ) );
+
+    status_header( 200 );
+    header( 'Content-Type: application/xml; charset=' . get_bloginfo( 'charset' ), true );
+
+    echo '<?xml version="1.0" encoding="' . esc_attr( get_bloginfo( 'charset' ) ) . '"?>' . "\n";
+    echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">' . "\n";
+
+    foreach ( $posts as $post ) {
+        $image = novosti_get_post_image_data( $post->ID, 'news-featured' );
+        if ( empty( $image['url'] ) ) continue;
+
+        echo "  <url>\n";
+        echo '    <loc>' . esc_url( get_permalink( $post->ID ) ) . "</loc>\n";
+        echo "    <image:image>\n";
+        echo '      <image:loc>' . esc_url( $image['url'] ) . "</image:loc>\n";
+        echo '      <image:title>' . esc_html( get_the_title( $post->ID ) ) . "</image:title>\n";
+        echo "    </image:image>\n";
+        echo "  </url>\n";
+    }
+
+    echo "</urlset>\n";
+    exit;
+}
+add_action( 'template_redirect', 'novosti_render_image_sitemap', 0 );
 
 function novosti_get_canonical_url() {
     global $novosti_eeat_page;
