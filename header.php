@@ -51,7 +51,7 @@
 
     .site-nav__menu a{
       display:block;
-      padding:10px 12px;
+      padding:10px 9px;
       font-size:13px;
       color:#333;
       border-bottom:3px solid transparent;
@@ -168,29 +168,7 @@
       'container'      => false,
       'menu_class'     => 'site-nav__menu',
       'menu_id'        => 'js-menu',
-      'fallback_cb'    => function() {
-        echo '<ul class="site-nav__menu" id="js-menu">';
-
-        $exclude = array();
-
-        foreach (array('reklama','partner','afisha') as $s) {
-          $c = get_category_by_slug($s);
-          if ($c) {
-            $exclude[] = $c->term_id;
-          }
-        }
-
-        $cats = get_categories(array(
-          'number'  => 7,
-          'exclude' => $exclude
-        ));
-
-        foreach ($cats as $cat) {
-          echo '<li><a href="' . esc_url(get_category_link($cat->term_id)) . '">' . esc_html($cat->name) . '</a></li>';
-        }
-
-        echo '</ul>';
-      },
+      'fallback_cb'    => 'novosti_render_primary_menu_fallback',
     ));
     ?>
 

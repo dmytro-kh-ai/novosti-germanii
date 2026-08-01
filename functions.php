@@ -74,6 +74,72 @@ function novosti_setup() {
 }
 add_action( 'after_setup_theme', 'novosti_setup' );
 
+// ===== PRIMARY MENU =====
+function novosti_get_primary_menu_slugs() {
+    return array(
+        'politika',
+        'ekonomika',
+        'energetika',
+        'nedvizhimost',
+        'immigratsiya',
+        'deutsche-bahn',
+        'burgergeld',
+        'rabota',
+        'avtomobili',
+        'proisshestviya',
+    );
+}
+
+function novosti_get_primary_menu_label( $term ) {
+    $labels = array(
+        'burgergeld'     => 'Пособия',
+        'avtomobili'     => 'Авто',
+        'proisshestviya' => 'Происшествия',
+    );
+
+    return isset( $labels[ $term->slug ] ) ? $labels[ $term->slug ] : $term->name;
+}
+
+function novosti_get_primary_menu_terms( $slugs = null ) {
+    $terms = array();
+    $slugs = $slugs ? $slugs : novosti_get_primary_menu_slugs();
+
+    foreach ( $slugs as $slug ) {
+        $term = get_category_by_slug( $slug );
+        if ( ! $term || novosti_is_service_or_duplicate_category_term( $term ) ) continue;
+
+        $terms[] = $term;
+    }
+
+    return $terms;
+}
+
+function novosti_render_primary_menu_fallback() {
+    echo '<ul class="site-nav__menu" id="js-menu">';
+
+    foreach ( novosti_get_primary_menu_terms() as $term ) {
+        echo '<li><a href="' . esc_url( get_category_link( $term->term_id ) ) . '">' . esc_html( novosti_get_primary_menu_label( $term ) ) . '</a></li>';
+    }
+
+    echo '</ul>';
+}
+
+function novosti_append_priority_menu_items( $items, $args ) {
+    if ( empty( $args->theme_location ) || $args->theme_location !== 'primary' ) return $items;
+
+    foreach ( novosti_get_primary_menu_terms( array( 'burgergeld', 'rabota', 'avtomobili', 'proisshestviya' ) ) as $term ) {
+        $url = get_category_link( $term->term_id );
+        if ( strpos( $items, $url ) !== false ) continue;
+
+        $items .= '<li class="menu-item menu-item-type-taxonomy menu-item-object-category">'
+            . '<a href="' . esc_url( $url ) . '">' . esc_html( novosti_get_primary_menu_label( $term ) ) . '</a>'
+            . '</li>';
+    }
+
+    return $items;
+}
+add_filter( 'wp_nav_menu_items', 'novosti_append_priority_menu_items', 10, 2 );
+
 // ===== LAZY LOADING =====
 function novosti_add_lazy( $attr, $attachment, $size ) {
     $is_priority_image = (
