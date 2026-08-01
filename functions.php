@@ -14,7 +14,7 @@ function novosti_enqueue() {
         'novosti-style',
         get_stylesheet_uri(),
         array('google-fonts'),
-        '1.6'
+        '1.7'
     );
 
     wp_enqueue_script(
@@ -750,7 +750,8 @@ function novosti_inject_ad_in_content( $content ) {
     if ( ! is_single() ) return $content;
     $ad_cat = get_category_by_slug('reklama');
     if ( ! $ad_cat ) return $content;
-    $ads = get_posts( array('post_type'=>'post','posts_per_page'=>1,'category__in'=>array($ad_cat->term_id),'orderby'=>'rand') );
+    $ads = get_posts( array('post_type'=>'post','posts_per_page'=>10,'category__in'=>array($ad_cat->term_id),'orderby'=>'rand') );
+    $ads = novosti_filter_blocked_ad_posts( $ads );
     if ( ! $ads ) return $content;
     $ad   = $ads[0];
     $img  = has_post_thumbnail($ad->ID) ? get_the_post_thumbnail($ad->ID,'news-card') : '';
@@ -860,14 +861,46 @@ function novosti_breadcrumb_schema() {
 add_action( 'wp_head', 'novosti_breadcrumb_schema', 20 );
 
 // ===== ХЕЛПЕРЫ =====
+function novosti_is_blocked_ad_post( $post ) {
+    $post_id = is_object( $post ) ? (int) $post->ID : (int) $post;
+    if ( ! $post_id ) return false;
+
+    $haystack = wp_strip_all_tags( get_the_title( $post_id ) . ' ' . get_post_field( 'post_content', $post_id ) );
+    $haystack .= ' ' . get_post_meta( $post_id, '_banner_url', true );
+
+    return (bool) preg_match( '/таро|таролог|маргарит|gadanie|84795923|176\s*84795923/iu', $haystack );
+}
+
+function novosti_filter_blocked_ad_posts( $posts ) {
+    if ( ! $posts ) return array();
+
+    return array_values( array_filter( $posts, function( $post ) {
+        return ! novosti_is_blocked_ad_post( $post );
+    } ) );
+}
+
 function novosti_get_ad_banner() {
-    return get_posts( array('post_type'=>'post','posts_per_page'=>10,'category_name'=>'reklama') );
+    return novosti_filter_blocked_ad_posts(
+        get_posts( array('post_type'=>'post','posts_per_page'=>10,'category_name'=>'reklama') )
+    );
 }
 function novosti_get_ad_articles( $count = 2 ) {
-    return get_posts( array('post_type'=>'post','posts_per_page'=>$count,'category_name'=>'reklama') );
+    return array_slice(
+        novosti_filter_blocked_ad_posts(
+            get_posts( array('post_type'=>'post','posts_per_page'=>max( 10, (int) $count * 3 ),'category_name'=>'reklama') )
+        ),
+        0,
+        (int) $count
+    );
 }
 function novosti_get_partner_posts( $count = 3 ) {
-    return get_posts( array('post_type'=>'post','posts_per_page'=>$count,'category_name'=>'partner') );
+    return array_slice(
+        novosti_filter_blocked_ad_posts(
+            get_posts( array('post_type'=>'post','posts_per_page'=>max( 10, (int) $count * 3 ),'category_name'=>'partner') )
+        ),
+        0,
+        (int) $count
+    );
 }
 
 function novosti_get_special_category_ids() {

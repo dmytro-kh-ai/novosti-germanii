@@ -77,15 +77,13 @@ $partner_posts = novosti_get_partner_posts(3);
 $afisha        = novosti_get_afisha(3);
 ?>
 
-<div class="ad-layout">
+<div class="ad-layout <?php echo $ad_banner ? '' : 'ad-layout--single'; ?>">
 
+  <?php if ( $ad_banner ) : ?>
   <div class="ad-block">
     <div class="ad-block__label">Реклама</div>
 
     <div class="ad-block__banner">
-
-      <?php if ( $ad_banner ) { ?>
-
         <div class="banner-carousel">
           <?php foreach ( $ad_banner as $index => $ad_post ) {
             $banner_url = get_post_meta($ad_post->ID, '_banner_url', true);
@@ -121,19 +119,9 @@ $afisha        = novosti_get_afisha(3);
             </div>
           <?php } ?>
         </div>
-
-      <?php } else { ?>
-
-        <div style="text-align:center;color:#bbb;font-size:12px;padding:20px;">
-          <div style="font-size:28px;margin-bottom:6px;">&#x1F5BC;</div>
-          Рекламный баннер<br>
-          <span style="font-size:10px;">Добавьте запись в категорию «reklama»</span>
-        </div>
-
-      <?php } ?>
-
     </div>
   </div>
+  <?php endif; ?>
 
   <div class="afisha-block">
 

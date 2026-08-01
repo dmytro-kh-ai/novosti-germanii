@@ -62,12 +62,12 @@ if ( novosti_is_city_category() ) :
   ?>
 
   <!-- РЕКЛАМА + АФИША -->
-  <div class="ad-layout">
+  <div class="ad-layout <?php echo $ad_banner ? '' : 'ad-layout--single'; ?>">
 
+    <?php if ( $ad_banner ) : ?>
     <div class="ad-block">
       <div class="ad-block__label">Реклама</div>
       <div class="ad-block__banner">
-        <?php if ( $ad_banner ) : ?>
           <div class="banner-carousel">
             <?php foreach ( $ad_banner as $i => $ad_post ) : ?>
               <div class="banner-carousel__slide <?php echo $i === 0 ? 'is-active' : ''; ?>">
@@ -100,15 +100,9 @@ if ( novosti_is_city_category() ) :
               </div>
             <?php endif; ?>
           </div>
-        <?php else : ?>
-          <div style="text-align:center;color:#bbb;font-size:12px;padding:20px;">
-            <div style="font-size:28px;margin-bottom:6px;">&#x1F5BC;</div>
-            Рекламный баннер<br>
-            <span style="font-size:10px;">Добавьте запись в категорию «reklama»</span>
-          </div>
-        <?php endif; ?>
       </div>
     </div>
+    <?php endif; ?>
 
     <div class="afisha-block">
       <div class="afisha-block__header">

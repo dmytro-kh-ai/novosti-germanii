@@ -747,6 +747,10 @@ ul { list-style: none; }
   margin-bottom: 14px;
 }
 
+.ad-layout--single {
+  grid-template-columns: 1fr;
+}
+
 .ad-layout .ad-block {
   height: fit-content !important;
   align-self: start !important;
