@@ -363,28 +363,30 @@ function novosti_get_eeat_pages() {
             'description' => 'Информация об использовании cookies на сайте Новости Германии.',
             'body'        => '<p>Сайт может использовать cookies и похожие технологии для корректной работы, аналитики, защиты от спама, запоминания пользовательских настроек и улучшения качества материалов.</p><h2>Типы cookies</h2><ul><li>технические cookies, необходимые для работы сайта;</li><li>аналитические cookies, если подключены сервисы статистики;</li><li>рекламные или партнерские cookies, если используются рекламные инструменты.</li></ul><p>Вы можете ограничить или удалить cookies в настройках браузера. Некоторые функции сайта после этого могут работать иначе.</p>',
         ),
-        'impressum' => array(
-            'title'       => 'Impressum',
-            'description' => 'Юридическая информация и сведения об ответственном лице сайта Новости Германии.',
-            'body'        => '<p>Эта страница предназначена для юридической информации о владельце и ответственном за содержание сайта.</p><p>Заполните здесь актуальные данные владельца проекта, адрес, email для связи и ответственное лицо согласно требованиям применимого законодательства.</p><p><strong>Важно:</strong> текст Impressum должен быть проверен владельцем сайта или юридическим специалистом.</p>',
-        ),
-        'datenschutz' => array(
-            'title'       => 'Datenschutzerklärung',
-            'description' => 'Политика конфиденциальности сайта Новости Германии.',
-            'body'        => '<p>Эта страница описывает общие принципы обработки персональных данных на сайте.</p><h2>Какие данные могут обрабатываться</h2><p>Сайт может обрабатывать технические данные доступа, cookies, данные аналитики, сообщения, отправленные пользователями, и данные, необходимые для защиты сайта.</p><h2>Правовая информация</h2><p>Финальный текст политики конфиденциальности должен учитывать фактически подключенные сервисы аналитики, рекламы, форм обратной связи и хостинга.</p>',
-        ),
-        'usloviya' => array(
-            'title'       => 'Условия использования',
-            'description' => 'Условия использования материалов сайта Новости Германии.',
-            'body'        => '<p>Материалы сайта предназначены для информационных целей. Редакция стремится публиковать точную информацию, но новости могут обновляться по мере появления новых данных.</p><p>Использование материалов сайта возможно с указанием активной ссылки на источник, если иное не указано отдельно.</p>',
-        ),
-        'sotrudnichestvo' => array(
-            'title'       => 'Сотрудничество',
-            'description' => 'Информация о сотрудничестве, рекламе и партнерских материалах на сайте Новости Германии.',
-            'body'        => '<p>Мы открыты к сотрудничеству с экспертами, авторами, организациями и рекламодателями, если предложение соответствует тематике сайта и интересам аудитории.</p><p>Рекламные и партнерские материалы должны быть отделены от редакционных публикаций и помечены понятным образом.</p>',
-        ),
     );
 }
+
+function novosti_redirect_legacy_trust_pages() {
+    if ( empty( $_SERVER['REQUEST_URI'] ) ) return;
+
+    $path = trim( (string) parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH ), '/' );
+    $redirects = array(
+        'impressum'        => home_url( '/o-nas/' ),
+        'datenschutz'      => home_url( '/politika-konfedentsialnosti/' ),
+        'datenschutzerklaerung' => home_url( '/politika-konfedentsialnosti/' ),
+        'datenschutzerklarung'  => home_url( '/politika-konfedentsialnosti/' ),
+        'agb'              => home_url( '/usloviya-ispolzovaniya/' ),
+        'usloviya'         => home_url( '/usloviya-ispolzovaniya/' ),
+        'sotrudnichestvo'  => home_url( '/svyazatsya-s-nami/' ),
+        'kontakty'         => home_url( '/svyazatsya-s-nami/' ),
+    );
+
+    if ( isset( $redirects[ $path ] ) ) {
+        wp_safe_redirect( $redirects[ $path ], 301 );
+        exit;
+    }
+}
+add_action( 'template_redirect', 'novosti_redirect_legacy_trust_pages', 2 );
 
 function novosti_get_eeat_page_by_request() {
     if ( empty( $_SERVER['REQUEST_URI'] ) ) return null;
@@ -453,7 +455,7 @@ function novosti_render_eeat_page() {
     get_footer();
     exit;
 }
-add_action( 'template_redirect', 'novosti_render_eeat_page', 2 );
+add_action( 'template_redirect', 'novosti_render_eeat_page', 3 );
 
 function novosti_eeat_document_title( $title ) {
     global $novosti_eeat_page;
