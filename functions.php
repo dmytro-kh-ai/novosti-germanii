@@ -21,7 +21,7 @@ function novosti_enqueue() {
         'novosti-js',
         get_template_directory_uri() . '/js/main.js',
         array(),
-        '1.5',
+        '1.6',
         true
     );
 }

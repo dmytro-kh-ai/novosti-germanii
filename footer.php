@@ -25,32 +25,5 @@
 
 <?php wp_footer(); ?>
 
-<script>
-(function() {
-  var slides = document.querySelectorAll('.banner-carousel__slide');
-  var dots   = document.querySelectorAll('.banner-carousel__dot');
-  if (!slides.length) return;
-  if (slides.length < 2) return;
-
-  var current = 0;
-
-  function goTo(n) {
-    slides[current].classList.remove('is-active');
-    dots[current] && dots[current].classList.remove('is-active');
-    current = n % slides.length;
-    slides[current].classList.add('is-active');
-    dots[current] && dots[current].classList.add('is-active');
-  }
-
-  dots.forEach(function(dot) {
-    dot.addEventListener('click', function() {
-      goTo(parseInt(this.dataset.index));
-    });
-  });
-
-  setInterval(function() { goTo(current + 1); }, 10000);
-})();
-</script>
-
 </body>
 </html>

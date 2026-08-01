@@ -9,12 +9,11 @@ function updateDateTime() {
   if (timeEl) {
     var h = String(now.getHours()).padStart(2,'0');
     var m = String(now.getMinutes()).padStart(2,'0');
-    var s = String(now.getSeconds()).padStart(2,'0');
-    timeEl.textContent = h + ':' + m + ':' + s;
+    timeEl.textContent = h + ':' + m;
   }
 }
 updateDateTime();
-setInterval(updateDateTime, 1000);
+setInterval(updateDateTime, 60000);
 
 // Бургер-меню
 var burger = document.getElementById('js-burger');
@@ -29,4 +28,32 @@ if (burger && menu) {
       menu.classList.remove('is-open');
     }
   });
+}
+
+// Карусель баннеров
+var slides = document.querySelectorAll('.banner-carousel__slide');
+var dots   = document.querySelectorAll('.banner-carousel__dot');
+
+if (slides.length > 1) {
+  var current = 0;
+
+  function goToSlide(n) {
+    slides[current].classList.remove('is-active');
+    if (dots[current]) dots[current].classList.remove('is-active');
+
+    current = n % slides.length;
+
+    slides[current].classList.add('is-active');
+    if (dots[current]) dots[current].classList.add('is-active');
+  }
+
+  dots.forEach(function(dot) {
+    dot.addEventListener('click', function() {
+      goToSlide(parseInt(this.dataset.index, 10) || 0);
+    });
+  });
+
+  setInterval(function() {
+    goToSlide(current + 1);
+  }, 10000);
 }
