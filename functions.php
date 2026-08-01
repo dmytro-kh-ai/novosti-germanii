@@ -14,7 +14,7 @@ function novosti_enqueue() {
         'novosti-style',
         get_stylesheet_uri(),
         array('google-fonts'),
-        '1.8'
+        '1.9'
     );
 
     wp_enqueue_script(
@@ -189,7 +189,17 @@ function novosti_robots_txt( $output, $public ) {
 add_filter( 'robots_txt', 'novosti_robots_txt', 999, 2 );
 
 function novosti_wp_robots( $robots ) {
+    global $novosti_eeat_page;
+
     $robots['max-image-preview'] = 'large';
+
+    if ( ! empty( $novosti_eeat_page ) ) {
+        unset( $robots['noindex'] );
+        $robots['index']  = true;
+        $robots['follow'] = true;
+
+        return $robots;
+    }
 
     if ( novosti_is_noindex_archive_or_filter() ) {
         unset( $robots['index'] );
@@ -202,6 +212,12 @@ function novosti_wp_robots( $robots ) {
 add_filter( 'wp_robots', 'novosti_wp_robots' );
 
 function novosti_yoast_robots( $robots ) {
+    global $novosti_eeat_page;
+
+    if ( ! empty( $novosti_eeat_page ) ) {
+        return 'index, follow, max-image-preview:large';
+    }
+
     if ( novosti_is_noindex_archive_or_filter() ) {
         return 'noindex, follow, max-image-preview:large';
     }
@@ -288,6 +304,12 @@ function novosti_render_news_sitemap() {
 add_action( 'template_redirect', 'novosti_render_news_sitemap', 0 );
 
 function novosti_get_canonical_url() {
+    global $novosti_eeat_page;
+
+    if ( ! empty( $novosti_eeat_page['slug'] ) ) {
+        return home_url( '/' . $novosti_eeat_page['slug'] . '/' );
+    }
+
     if ( is_singular() ) {
         return get_permalink();
     }
@@ -307,6 +329,142 @@ function novosti_yoast_canonical( $canonical ) {
     return $url ? $url : $canonical;
 }
 add_filter( 'wpseo_canonical', 'novosti_yoast_canonical' );
+
+// ===== E-E-A-T PAGES =====
+function novosti_get_eeat_pages() {
+    return array(
+        'o-proekte' => array(
+            'title'       => 'О проекте',
+            'description' => 'Информация о проекте Новости Германии: миссия, тематика, редакционные принципы и подход к публикации материалов.',
+            'body'        => '<p><strong>Новости Германии</strong> — русскоязычный информационный проект о жизни, политике, экономике, миграции, транспорте, недвижимости и городских событиях Германии.</p><p>Мы публикуем материалы для читателей, которым важно быстро понимать, какие решения, события и изменения могут повлиять на жизнь в Германии и Европе.</p><h2>Наша задача</h2><p>Давать понятные новости на русском языке, отделять факты от оценок и помогать читателям ориентироваться в немецкой повестке без лишнего шума.</p><h2>Темы проекта</h2><p>На сайте выходят новости о политике, экономике, иммиграции, работе, пособиях, недвижимости, Deutsche Bahn, городах Германии, обществе и происшествиях.</p>',
+        ),
+        'redaktsiya' => array(
+            'title'       => 'Редакция',
+            'description' => 'Информация о редакции сайта Новости Германии, редакционных принципах, проверке фактов и обновлении материалов.',
+            'body'        => '<p>Редакция сайта работает с открытыми источниками, официальными сообщениями, публикациями немецких ведомств, городских администраций, СМИ и профильных организаций.</p><h2>Редакционные принципы</h2><ul><li>проверяем ключевые факты перед публикацией;</li><li>отделяем новостные факты от интерпретаций;</li><li>обновляем материалы, если появляется значимая новая информация;</li><li>не используем намеренно вводящие в заблуждение заголовки;</li><li>помечаем рекламные и партнерские материалы отдельно от редакционных.</li></ul><h2>Исправления</h2><p>Если вы заметили ошибку или неточность, сообщите нам через страницу контактов. Мы проверим информацию и при необходимости внесем исправление.</p>',
+        ),
+        'authors' => array(
+            'title'       => 'Авторы',
+            'description' => 'Авторы и редакторы проекта Новости Германии: биографии, специализация и последние публикации.',
+            'body'        => '',
+        ),
+        'kontakty' => array(
+            'title'       => 'Контакты',
+            'description' => 'Контакты редакции Новости Германии для сообщений об ошибках, предложений, источников и вопросов по сотрудничеству.',
+            'body'        => '<p>Связаться с редакцией можно по вопросам исправлений, предложений тем, источников, сотрудничества и рекламы.</p><h2>Редакционные вопросы</h2><p>Если вы хотите сообщить об ошибке, пришлите ссылку на материал и краткое описание неточности.</p><h2>Сотрудничество</h2><p>Для партнерских предложений и рекламы используйте страницу «Сотрудничество» или контактные данные, указанные в Impressum.</p>',
+        ),
+        'istochniki' => array(
+            'title'       => 'Источники',
+            'description' => 'Как Новости Германии работает с источниками: официальные данные, ведомства, городские службы, СМИ и проверка информации.',
+            'body'        => '<p>При подготовке материалов редакция использует открытые и проверяемые источники: официальные сообщения органов власти Германии и ЕС, публикации городских администраций, ведомств, полиции, судов, транспортных операторов, статистических служб, пресс-релизы компаний и материалы авторитетных СМИ.</p><h2>Как мы указываем источники</h2><p>Если материал основан на конкретной публикации или сообщении, источник может быть указан в тексте статьи или в блоке метаданных рядом с датой публикации.</p><h2>Проверка фактов</h2><p>Для важных тем мы стараемся сверять информацию по нескольким источникам и обновлять материал, если официальные данные меняются.</p>',
+        ),
+        'cookies' => array(
+            'title'       => 'Cookies',
+            'description' => 'Информация об использовании cookies на сайте Новости Германии.',
+            'body'        => '<p>Сайт может использовать cookies и похожие технологии для корректной работы, аналитики, защиты от спама, запоминания пользовательских настроек и улучшения качества материалов.</p><h2>Типы cookies</h2><ul><li>технические cookies, необходимые для работы сайта;</li><li>аналитические cookies, если подключены сервисы статистики;</li><li>рекламные или партнерские cookies, если используются рекламные инструменты.</li></ul><p>Вы можете ограничить или удалить cookies в настройках браузера. Некоторые функции сайта после этого могут работать иначе.</p>',
+        ),
+        'impressum' => array(
+            'title'       => 'Impressum',
+            'description' => 'Юридическая информация и сведения об ответственном лице сайта Новости Германии.',
+            'body'        => '<p>Эта страница предназначена для юридической информации о владельце и ответственном за содержание сайта.</p><p>Заполните здесь актуальные данные владельца проекта, адрес, email для связи и ответственное лицо согласно требованиям применимого законодательства.</p><p><strong>Важно:</strong> текст Impressum должен быть проверен владельцем сайта или юридическим специалистом.</p>',
+        ),
+        'datenschutz' => array(
+            'title'       => 'Datenschutzerklärung',
+            'description' => 'Политика конфиденциальности сайта Новости Германии.',
+            'body'        => '<p>Эта страница описывает общие принципы обработки персональных данных на сайте.</p><h2>Какие данные могут обрабатываться</h2><p>Сайт может обрабатывать технические данные доступа, cookies, данные аналитики, сообщения, отправленные пользователями, и данные, необходимые для защиты сайта.</p><h2>Правовая информация</h2><p>Финальный текст политики конфиденциальности должен учитывать фактически подключенные сервисы аналитики, рекламы, форм обратной связи и хостинга.</p>',
+        ),
+        'usloviya' => array(
+            'title'       => 'Условия использования',
+            'description' => 'Условия использования материалов сайта Новости Германии.',
+            'body'        => '<p>Материалы сайта предназначены для информационных целей. Редакция стремится публиковать точную информацию, но новости могут обновляться по мере появления новых данных.</p><p>Использование материалов сайта возможно с указанием активной ссылки на источник, если иное не указано отдельно.</p>',
+        ),
+        'sotrudnichestvo' => array(
+            'title'       => 'Сотрудничество',
+            'description' => 'Информация о сотрудничестве, рекламе и партнерских материалах на сайте Новости Германии.',
+            'body'        => '<p>Мы открыты к сотрудничеству с экспертами, авторами, организациями и рекламодателями, если предложение соответствует тематике сайта и интересам аудитории.</p><p>Рекламные и партнерские материалы должны быть отделены от редакционных публикаций и помечены понятным образом.</p>',
+        ),
+    );
+}
+
+function novosti_get_eeat_page_by_request() {
+    if ( empty( $_SERVER['REQUEST_URI'] ) ) return null;
+
+    $path = parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH );
+    $slug = trim( (string) $path, '/' );
+
+    if ( ! $slug || strpos( $slug, '/' ) !== false ) return null;
+
+    $pages = novosti_get_eeat_pages();
+
+    return isset( $pages[ $slug ] ) ? array( 'slug' => $slug, 'page' => $pages[ $slug ] ) : null;
+}
+
+function novosti_render_authors_page() {
+    $authors = get_users( array(
+        'who'                 => 'authors',
+        'has_published_posts' => array( 'post' ),
+        'orderby'             => 'display_name',
+        'order'               => 'ASC',
+    ) );
+
+    if ( ! $authors ) {
+        echo '<p>Информация об авторах будет добавлена после публикации материалов.</p>';
+        return;
+    }
+
+    echo '<div class="author-list">';
+    foreach ( $authors as $author ) {
+        $bio = get_the_author_meta( 'description', $author->ID );
+        echo '<section class="author-card">';
+        echo get_avatar( $author->ID, 96, '', esc_attr( $author->display_name ), array( 'class' => 'author-card__avatar' ) );
+        echo '<div class="author-card__body">';
+        echo '<h2><a href="' . esc_url( get_author_posts_url( $author->ID ) ) . '">' . esc_html( $author->display_name ) . '</a></h2>';
+        echo '<p>' . esc_html( $bio ? $bio : 'Автор материалов сайта «' . get_bloginfo( 'name' ) . '».' ) . '</p>';
+        echo '<p><a href="' . esc_url( get_author_posts_url( $author->ID ) ) . '">Все публикации автора &rarr;</a></p>';
+        echo '</div>';
+        echo '</section>';
+    }
+    echo '</div>';
+}
+
+function novosti_render_eeat_page() {
+    $resolved = novosti_get_eeat_page_by_request();
+    if ( ! $resolved || ! is_404() ) return;
+
+    global $novosti_eeat_page;
+    $novosti_eeat_page = $resolved;
+
+    status_header( 200 );
+    nocache_headers();
+
+    get_header();
+    echo '<nav class="breadcrumbs" aria-label="Хлебные крошки"><div class="container"><span><a href="' . esc_url( home_url( '/' ) ) . '">Главная</a> → <span>' . esc_html( $resolved['page']['title'] ) . '</span></span></div></nav>';
+    echo '<main class="site-main"><div class="container"><article class="single-post page-content">';
+    echo '<h1 class="single-post__title">' . esc_html( $resolved['page']['title'] ) . '</h1>';
+    echo '<div class="single-post__content">';
+
+    if ( $resolved['slug'] === 'authors' ) {
+        novosti_render_authors_page();
+    } else {
+        echo wp_kses_post( $resolved['page']['body'] );
+    }
+
+    echo '</div></article></div></main>';
+    get_footer();
+    exit;
+}
+add_action( 'template_redirect', 'novosti_render_eeat_page', 2 );
+
+function novosti_eeat_document_title( $title ) {
+    global $novosti_eeat_page;
+
+    if ( ! empty( $novosti_eeat_page['page']['title'] ) ) {
+        return $novosti_eeat_page['page']['title'] . ' — ' . get_bloginfo( 'name' );
+    }
+
+    return $title;
+}
+add_filter( 'pre_get_document_title', 'novosti_eeat_document_title' );
 
 // ===== SEO: URL HYGIENE =====
 function novosti_transliterate_slug_text( $text ) {
@@ -414,6 +572,12 @@ function novosti_trim_meta_text( $text, $max = 155 ) {
 }
 
 function novosti_get_meta_description() {
+    global $novosti_eeat_page;
+
+    if ( ! empty( $novosti_eeat_page['page']['description'] ) ) {
+        return novosti_trim_meta_text( $novosti_eeat_page['page']['description'] );
+    }
+
     $site_name = get_bloginfo( 'name' );
     $site_desc = get_bloginfo( 'description' );
     $paged     = max( 1, (int) get_query_var( 'paged' ) );
@@ -490,6 +654,12 @@ function novosti_yoast_metadesc( $description ) {
 add_filter( 'wpseo_metadesc', 'novosti_yoast_metadesc' );
 
 function novosti_yoast_title( $title ) {
+    global $novosti_eeat_page;
+
+    if ( ! empty( $novosti_eeat_page['page']['title'] ) ) {
+        return $novosti_eeat_page['page']['title'] . ' — ' . get_bloginfo( 'name' );
+    }
+
     if ( is_singular() ) {
         $post_title = wp_strip_all_tags( get_the_title() );
 
@@ -704,6 +874,7 @@ function novosti_seo_head() {
     }
     ?>
 <?php if ( ! defined( 'WPSEO_VERSION' ) ) : ?>
+<link rel="canonical" href="<?php echo esc_url($url); ?>">
 <meta property="og:type"        content="<?php echo esc_attr($type); ?>">
 <meta property="og:title"       content="<?php echo esc_attr($title); ?>">
 <meta property="og:description" content="<?php echo esc_attr($description); ?>">
