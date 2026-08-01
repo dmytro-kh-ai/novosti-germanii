@@ -84,6 +84,8 @@ $related         = novosti_get_related_posts( $current_post_id, 6 );
 $related_ids     = wp_list_pluck( $related, 'ID' );
 $category_more   = novosti_get_more_from_primary_category( $current_post_id, 4, $related_ids );
 $link_block_ids  = array_merge( array( $current_post_id ), $related_ids, wp_list_pluck( $category_more, 'ID' ) );
+$popular_more    = novosti_get_popular_posts( 4, $link_block_ids );
+$link_block_ids  = array_merge( $link_block_ids, wp_list_pluck( $popular_more, 'ID' ) );
 $latest_more     = get_posts( array(
   'post_type'           => 'post',
   'post_status'         => 'publish',
@@ -178,6 +180,7 @@ $latest_more     = get_posts( array(
 
 <?php
 novosti_render_link_list( 'Ещё по теме', $category_more, 'internal-links--topic' );
+novosti_render_link_list( 'Популярные новости', $popular_more, 'internal-links--popular' );
 novosti_render_link_list( 'Последние новости Германии', $latest_more, 'internal-links--latest' );
 ?>
 

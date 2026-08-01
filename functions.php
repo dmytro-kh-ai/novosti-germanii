@@ -27,6 +27,39 @@ function novosti_enqueue() {
 }
 add_action( 'wp_enqueue_scripts', 'novosti_enqueue' );
 
+// ===== WEBSUB / PUBSUBHUBBUB =====
+function novosti_get_websub_hubs() {
+    return array(
+        'https://pubsubhubbub.appspot.com/',
+    );
+}
+
+function novosti_rss2_websub_links() {
+    foreach ( novosti_get_websub_hubs() as $hub ) {
+        echo '<atom:link rel="hub" href="' . esc_url( $hub ) . '" />' . "\n";
+    }
+}
+add_action( 'rss2_head', 'novosti_rss2_websub_links' );
+
+function novosti_notify_websub_hubs( $new_status, $old_status, $post ) {
+    if ( $post->post_type !== 'post' || $new_status !== 'publish' ) return;
+    if ( wp_is_post_revision( $post->ID ) || wp_is_post_autosave( $post->ID ) ) return;
+
+    $feed_url = get_feed_link( 'rss2' );
+
+    foreach ( novosti_get_websub_hubs() as $hub ) {
+        wp_remote_post( $hub, array(
+            'timeout'  => 3,
+            'blocking' => false,
+            'body'     => array(
+                'hub.mode' => 'publish',
+                'hub.url'  => $feed_url,
+            ),
+        ) );
+    }
+}
+add_action( 'transition_post_status', 'novosti_notify_websub_hubs', 10, 3 );
+
 // ===== ТЕМА =====
 function novosti_setup() {
     add_theme_support( 'title-tag' );
@@ -1690,6 +1723,39 @@ function novosti_get_more_from_primary_category( $post_id, $count = 4, $exclude_
         'ignore_sticky_posts' => true,
         'no_found_rows'       => true,
     ) );
+}
+
+function novosti_get_popular_posts( $count = 4, $exclude_ids = array() ) {
+    $exclude_ids = array_values( array_unique( array_map( 'intval', $exclude_ids ) ) );
+    $base_args = array(
+        'post_type'           => 'post',
+        'post_status'         => 'publish',
+        'category__not_in'    => novosti_get_special_category_ids(),
+        'post__not_in'        => $exclude_ids,
+        'ignore_sticky_posts' => true,
+        'no_found_rows'       => true,
+    );
+
+    $popular = get_posts( array_merge( $base_args, array(
+        'posts_per_page' => $count,
+        'orderby'        => 'comment_count',
+        'order'          => 'DESC',
+        'date_query'     => array( array( 'after' => '30 days ago' ) ),
+    ) ) );
+
+    if ( count( $popular ) >= $count ) {
+        return $popular;
+    }
+
+    $exclude_ids = array_merge( $exclude_ids, wp_list_pluck( $popular, 'ID' ) );
+    $latest = get_posts( array_merge( $base_args, array(
+        'posts_per_page' => $count - count( $popular ),
+        'post__not_in'   => array_values( array_unique( array_map( 'intval', $exclude_ids ) ) ),
+        'orderby'        => 'date',
+        'order'          => 'DESC',
+    ) ) );
+
+    return array_merge( $popular, $latest );
 }
 
 function novosti_render_link_list( $title, $posts, $class = '' ) {
