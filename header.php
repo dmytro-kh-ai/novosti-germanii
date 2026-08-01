@@ -106,7 +106,7 @@
         align-items:center;
       }
 
-      .site-header__brand{justify-content:flex-start;gap:12px}
+      .site-header__brand{justify-content:center;gap:12px}
       .site-header__text{min-width:0}
       .site-header__logo-text{font-size:20px;line-height:1.18}
       .site-header__tagline{font-size:12px;line-height:1.35}

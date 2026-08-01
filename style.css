@@ -618,7 +618,7 @@ ul { list-style: none; }
 
   /* Хедер */
   .site-header { padding: 14px var(--content-pad); }
-  .site-header__brand { justify-content: flex-start; gap: 12px; }
+  .site-header__brand { justify-content: center; gap: 12px; }
   .site-header__logo-text { font-size: 20px; line-height: 1.18; }
   .site-header__logo img { max-height: 56px; }
   .site-header__tagline { font-size: 12px; line-height: 1.35; }
