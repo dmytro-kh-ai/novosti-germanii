@@ -119,7 +119,31 @@ add_action( 'wp_enqueue_scripts', function() {
 
 // ===== ИНДЕКСАЦИЯ =====
 function novosti_get_noindex_category_slugs() {
-    return array( 'reklama', 'partner' );
+    return array(
+        'reklama',
+        'partner',
+        'reklamnaya-statya',
+        'reklamnyj-banner',
+        'afisha',
+    );
+}
+
+function novosti_is_service_or_duplicate_category_term( $term ) {
+    if ( ! ( $term instanceof WP_Term ) || $term->taxonomy !== 'category' ) return false;
+
+    if ( in_array( $term->slug, novosti_get_noindex_category_slugs(), true ) ) {
+        return true;
+    }
+
+    if ( strpos( $term->slug, 'trash-' ) === 0 ) {
+        return true;
+    }
+
+    if ( preg_match( '/[^\x20-\x7E]/', $term->slug ) ) {
+        return true;
+    }
+
+    return false;
 }
 
 function novosti_is_noindex_category() {
@@ -128,7 +152,7 @@ function novosti_is_noindex_category() {
     $term = get_queried_object();
     if ( ! $term || empty( $term->slug ) ) return false;
 
-    return in_array( $term->slug, novosti_get_noindex_category_slugs(), true );
+    return novosti_is_service_or_duplicate_category_term( $term );
 }
 
 function novosti_has_noindex_query_params() {
@@ -245,7 +269,7 @@ function novosti_exclude_service_terms_from_yoast_sitemap( $url, $type, $object 
     if (
         $object instanceof WP_Term
         && $object->taxonomy === 'category'
-        && in_array( $object->slug, novosti_get_noindex_category_slugs(), true )
+        && novosti_is_service_or_duplicate_category_term( $object )
     ) {
         return false;
     }
@@ -1208,11 +1232,24 @@ function novosti_get_partner_posts( $count = 3 ) {
 
 function novosti_get_special_category_ids() {
     $ex = array();
-    foreach ( array('reklama','partner','afisha') as $s ) {
+    foreach ( novosti_get_noindex_category_slugs() as $s ) {
         $c = get_category_by_slug($s);
         if ( $c ) $ex[] = $c->term_id;
     }
-    return $ex;
+
+    $trash_terms = get_categories( array(
+        'taxonomy'   => 'category',
+        'hide_empty' => false,
+        'fields'     => 'all',
+    ) );
+
+    foreach ( $trash_terms as $term ) {
+        if ( strpos( $term->slug, 'trash-' ) === 0 ) {
+            $ex[] = (int) $term->term_id;
+        }
+    }
+
+    return array_values( array_unique( $ex ) );
 }
 
 function novosti_get_city_category_ids() {
@@ -1398,7 +1435,7 @@ function novosti_get_category_seo_text( $term ) {
         return $map[ $term->slug ];
     }
 
-    return 'Последние новости по теме «' . $term->name . '»: актуальные события Германии, важные изменения, свежие публикации и полезная информация на русском языке. Раздел регулярно обновляется и помогает быстро найти материалы по выбранной теме.';
+    return 'Раздел «' . $term->name . '» собирает последние публикации по этой теме в Германии: важные события, решения властей, городскую повестку, общественные изменения и практическую информацию для читателей. Здесь можно быстро найти свежие материалы, сравнить связанные новости и перейти к похожим разделам сайта. Рубрика регулярно обновляется, а материалы внутри неё помогают следить за развитием темы без поиска по разным страницам.';
 }
 
 function novosti_render_category_seo_intro( $term ) {
