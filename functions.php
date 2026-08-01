@@ -14,7 +14,7 @@ function novosti_enqueue() {
         'novosti-style',
         get_stylesheet_uri(),
         array('google-fonts'),
-        '1.5'
+        '1.6'
     );
 
     wp_enqueue_script(
