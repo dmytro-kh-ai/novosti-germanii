@@ -9,6 +9,7 @@
     html,body{background:#f0f2f5;min-height:100%;-webkit-text-size-adjust:100%;text-size-adjust:100%}
     body{font-family:'PT Sans',Arial,sans-serif;font-size:15px;color:#222;line-height:1.6}
     a{color:inherit;text-decoration:none}
+    .screen-reader-text{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 
     .site-wrapper{max-width:1100px;margin:0 auto;background:#fff;box-shadow:0 0 40px rgba(0,0,0,.15);min-height:100vh}
     .top-bar{background:#fff;border-bottom:1px solid #e0e0e0;padding:5px 16px;display:flex;align-items:center;justify-content:space-between}
