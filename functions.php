@@ -594,10 +594,62 @@ function novosti_get_schema_logo_url() {
     return '';
 }
 
+function novosti_get_post_image_data( $post_id = 0, $size = 'news-featured' ) {
+    $post_id = (int) $post_id;
+    if ( ! $post_id ) return array();
+
+    if ( has_post_thumbnail( $post_id ) ) {
+        $image = wp_get_attachment_image_src( get_post_thumbnail_id( $post_id ), $size );
+        if ( $image ) {
+            return array(
+                'url'    => $image[0],
+                'width'  => (int) $image[1],
+                'height' => (int) $image[2],
+            );
+        }
+    }
+
+    $attached_images = get_children( array(
+        'post_parent'    => $post_id,
+        'post_type'      => 'attachment',
+        'post_mime_type' => 'image',
+        'posts_per_page' => 1,
+        'orderby'        => 'menu_order ID',
+        'order'          => 'ASC',
+    ) );
+
+    if ( $attached_images ) {
+        $attachment = reset( $attached_images );
+        $image      = wp_get_attachment_image_src( $attachment->ID, $size );
+        if ( $image ) {
+            return array(
+                'url'    => $image[0],
+                'width'  => (int) $image[1],
+                'height' => (int) $image[2],
+            );
+        }
+    }
+
+    $content = get_post_field( 'post_content', $post_id );
+    if ( $content && preg_match( '/<img[^>]+src=["\']([^"\']+)["\']/i', $content, $match ) ) {
+        return array(
+            'url'    => esc_url_raw( $match[1] ),
+            'width'  => 1200,
+            'height' => 675,
+        );
+    }
+
+    return array();
+}
+
 function novosti_get_social_image_url( $post_id = 0 ) {
-    if ( $post_id && has_post_thumbnail( $post_id ) ) {
-        $image = get_the_post_thumbnail_url( $post_id, 'news-featured' );
-        if ( $image ) return $image;
+    if ( $post_id ) {
+        $post_image = novosti_get_post_image_data( $post_id );
+        if ( ! empty( $post_image['url'] ) ) {
+            return $post_image['url'];
+        }
+
+        return '';
     }
 
     $logo_url = novosti_get_schema_logo_url();
@@ -640,6 +692,16 @@ function novosti_seo_head() {
 
     $description = novosti_trim_meta_text( $description );
     $logo_url    = novosti_get_schema_logo_url();
+    $social_image_width  = 1200;
+    $social_image_height = 675;
+    $post_image_data = ( is_singular( 'post' ) && ! empty( $post->ID ) )
+        ? novosti_get_post_image_data( $post->ID )
+        : array();
+
+    if ( ! empty( $post_image_data['width'] ) && ! empty( $post_image_data['height'] ) ) {
+        $social_image_width  = (int) $post_image_data['width'];
+        $social_image_height = (int) $post_image_data['height'];
+    }
     ?>
 <?php if ( ! defined( 'WPSEO_VERSION' ) ) : ?>
 <meta property="og:type"        content="<?php echo esc_attr($type); ?>">
@@ -647,12 +709,18 @@ function novosti_seo_head() {
 <meta property="og:description" content="<?php echo esc_attr($description); ?>">
 <meta property="og:url"         content="<?php echo esc_url($url); ?>">
 <meta property="og:site_name"   content="<?php echo esc_attr($site_name); ?>">
+<?php if ( $image ) : ?>
 <meta property="og:image"       content="<?php echo esc_url($image); ?>">
+<meta property="og:image:width" content="<?php echo esc_attr($social_image_width); ?>">
+<meta property="og:image:height" content="<?php echo esc_attr($social_image_height); ?>">
+<?php endif; ?>
 <meta property="og:locale"      content="ru_RU">
 <meta name="twitter:card"        content="summary_large_image">
 <meta name="twitter:title"       content="<?php echo esc_attr($title); ?>">
 <meta name="twitter:description" content="<?php echo esc_attr($description); ?>">
+<?php if ( $image ) : ?>
 <meta name="twitter:image"       content="<?php echo esc_url($image); ?>">
+<?php endif; ?>
 <?php endif; ?>
 <?php if ( is_singular('post') && $pub_date ) : ?>
 <meta property="article:published_time" content="<?php echo esc_attr($pub_date); ?>">
@@ -673,21 +741,18 @@ if ( $logo_url ) {
     );
 }
 
-$image_schema = array(
+$image_schema = $image ? array(
     '@type' => 'ImageObject',
     '@id'   => trailingslashit( $url ) . '#primaryimage',
     'url'   => $image,
-);
+) : array();
 
-if ( is_singular( 'post' ) && has_post_thumbnail() ) {
-    $image_data = wp_get_attachment_image_src( get_post_thumbnail_id(), 'news-featured' );
-    if ( $image_data ) {
-        $image_schema['width']  = (int) $image_data[1];
-        $image_schema['height'] = (int) $image_data[2];
-    }
+if ( is_singular( 'post' ) && ! empty( $post_image_data ) ) {
+    $image_schema['width']  = $social_image_width;
+    $image_schema['height'] = $social_image_height;
 }
 
-if ( empty( $image_schema['width'] ) || empty( $image_schema['height'] ) ) {
+if ( $image_schema && ( empty( $image_schema['width'] ) || empty( $image_schema['height'] ) ) ) {
     $image_schema['width']  = 1200;
     $image_schema['height'] = 675;
 }
@@ -705,7 +770,6 @@ $article_schema = array(
     ),
     'datePublished'       => $pub_date,
     'dateModified'        => $mod_date,
-    'image'               => $image_schema,
     'author'              => array(
         '@type' => 'Person',
         '@id'   => $author_id ? get_author_posts_url( $author_id ) . '#author' : home_url( '/#author' ),
@@ -716,6 +780,11 @@ $article_schema = array(
     'isAccessibleForFree' => true,
     'inLanguage'          => 'ru-RU',
 );
+
+if ( $image_schema ) {
+    $article_schema['image'] = $image_schema;
+    $article_schema['mainEntityOfPage']['primaryImageOfPage'] = $image_schema;
+}
 
 if ( $cat_name ) {
     $article_schema['articleSection'] = $cat_name;
