@@ -14,7 +14,6 @@
             array('url'=>home_url('/istochniki/'),      'label'=>'Источники'),
             array('url'=>home_url('/svyazatsya-s-nami/'), 'label'=>'Сотрудничество'),
             array('url'=>home_url('/usloviya-ispolzovaniya/'), 'label'=>'AGB'),
-            array('url'=>home_url('/cookies/'),         'label'=>'Cookies'),
             array('url'=>home_url('/o-nas/'),           'label'=>'Impressum'),
             array('url'=>home_url('/politika-konfedentsialnosti/'), 'label'=>'Datenschutz'),
           );
@@ -30,7 +29,6 @@
       <a href="<?php echo esc_url( home_url('/istochniki/') ); ?>">Источники</a>
       <a href="<?php echo esc_url( home_url('/svyazatsya-s-nami/') ); ?>">Сотрудничество</a>
       <a href="<?php echo esc_url( home_url('/usloviya-ispolzovaniya/') ); ?>">AGB</a>
-      <a href="<?php echo esc_url( home_url('/cookies/') ); ?>">Cookies</a>
       <a href="<?php echo esc_url( home_url('/o-nas/') ); ?>">Impressum</a>
       <a href="<?php echo esc_url( home_url('/politika-konfedentsialnosti/') ); ?>">Datenschutz</a>
     </nav>
