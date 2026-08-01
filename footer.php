@@ -30,6 +30,7 @@
   var slides = document.querySelectorAll('.banner-carousel__slide');
   var dots   = document.querySelectorAll('.banner-carousel__dot');
   if (!slides.length) return;
+  if (slides.length < 2) return;
 
   var current = 0;
 

@@ -76,7 +76,11 @@ if ( novosti_is_city_category() ) :
                     <?php echo get_the_post_thumbnail(
                       $ad_post->ID,
                       'medium_large',
-                      array( 'style' => 'width:100%;max-width:700px;height:auto;display:block;margin:0 auto;border-radius:4px;' )
+                      array(
+                        'style'         => 'width:100%;max-width:700px;height:auto;display:block;margin:0 auto;border-radius:4px;',
+                        'loading'       => $i === 0 ? 'eager' : 'lazy',
+                        'fetchpriority' => $i === 0 ? 'high' : 'auto',
+                      )
                     ); ?>
                   </a>
                 <?php else : ?>

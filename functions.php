@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 function novosti_enqueue() {
     wp_enqueue_style(
         'google-fonts',
-        'https://fonts.googleapis.com/css2?...',
+        'https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&family=PT+Serif:wght@700&display=swap',
         array(),
         null
     );
@@ -14,7 +14,7 @@ function novosti_enqueue() {
         'novosti-style',
         get_stylesheet_uri(),
         array('google-fonts'),
-        '1.4'
+        '1.5'
     );
 
     wp_enqueue_script(
@@ -43,8 +43,20 @@ add_action( 'after_setup_theme', 'novosti_setup' );
 
 // ===== LAZY LOADING =====
 function novosti_add_lazy( $attr, $attachment, $size ) {
-    $attr['loading']  = 'lazy';
+    $is_priority_image = (
+        $size === 'news-featured' && is_singular( 'post' )
+    ) || (
+        ! empty( $attr['class'] ) && strpos( $attr['class'], 'custom-logo' ) !== false
+    );
+
+    $attr['loading']  = ( ! empty( $attr['loading'] ) && $attr['loading'] === 'eager' )
+        ? 'eager'
+        : ( $is_priority_image ? 'eager' : 'lazy' );
     $attr['decoding'] = 'async';
+
+    if ( $size === 'news-featured' && is_singular( 'post' ) ) {
+        $attr['fetchpriority'] = 'high';
+    }
 
     if ( empty( $attr['alt'] ) ) {
         $alt = get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true );
@@ -468,10 +480,45 @@ add_filter( 'wpseo_title', 'novosti_yoast_title' );
 
 // ===== DNS PREFETCH =====
 function novosti_dns_prefetch() {
+    echo '<link rel="preconnect" href="https://fonts.googleapis.com">' . "\n";
+    echo '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' . "\n";
     echo '<link rel="dns-prefetch" href="//fonts.googleapis.com">' . "\n";
     echo '<link rel="dns-prefetch" href="//fonts.gstatic.com">' . "\n";
 }
 add_action( 'wp_head', 'novosti_dns_prefetch', 1 );
+
+function novosti_preload_lcp_image() {
+    $image_id = 0;
+    $size     = 'news-featured';
+
+    if ( is_singular( 'post' ) && has_post_thumbnail() ) {
+        $image_id = get_post_thumbnail_id();
+        $size     = 'news-featured';
+    } elseif ( is_front_page() || is_home() || novosti_is_city_category() ) {
+        $ads = novosti_get_ad_banner();
+        if ( ! empty( $ads[0] ) && has_post_thumbnail( $ads[0]->ID ) ) {
+            $image_id = get_post_thumbnail_id( $ads[0]->ID );
+            $size     = 'medium_large';
+        }
+    }
+
+    if ( ! $image_id ) return;
+
+    $src = wp_get_attachment_image_url( $image_id, $size );
+    if ( ! $src ) return;
+
+    $srcset = wp_get_attachment_image_srcset( $image_id, $size );
+    $sizes  = $size === 'medium_large'
+        ? '(max-width: 900px) 100vw, 700px'
+        : '(max-width: 1200px) 100vw, 1200px';
+
+    echo '<link rel="preload" as="image" fetchpriority="high" href="' . esc_url( $src ) . '"';
+    if ( $srcset ) {
+        echo ' imagesrcset="' . esc_attr( $srcset ) . '" imagesizes="' . esc_attr( $sizes ) . '"';
+    }
+    echo '>' . "\n";
+}
+add_action( 'wp_head', 'novosti_preload_lcp_image', 2 );
 
 // ===== DEFER JS =====
 function novosti_defer_scripts( $tag, $handle, $src ) {
