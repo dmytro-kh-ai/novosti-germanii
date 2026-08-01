@@ -133,6 +133,16 @@ function novosti_security_headers() {
 }
 add_action( 'send_headers', 'novosti_security_headers', 20 );
 
+function novosti_public_cache_headers() {
+    if ( headers_sent() || is_admin() || is_user_logged_in() || wp_doing_ajax() ) return;
+    if ( ! isset( $_SERVER['REQUEST_METHOD'] ) || $_SERVER['REQUEST_METHOD'] !== 'GET' ) return;
+    if ( is_404() || is_feed() || is_search() || is_preview() || novosti_has_noindex_query_params() ) return;
+
+    header( 'Cache-Control: public, max-age=300, stale-while-revalidate=3600' );
+    header( 'Expires: ' . gmdate( 'D, d M Y H:i:s', time() + 300 ) . ' GMT' );
+}
+add_action( 'template_redirect', 'novosti_public_cache_headers', 1 );
+
 // ===== ИНДЕКСАЦИЯ =====
 function novosti_get_noindex_category_slugs() {
     return array(
@@ -322,6 +332,8 @@ function novosti_render_news_sitemap() {
     status_header( 200 );
     header( 'Content-Type: application/xml; charset=' . get_bloginfo( 'charset' ), true );
     header( 'X-Robots-Tag: noindex, follow', true );
+    header( 'Cache-Control: public, max-age=300, stale-while-revalidate=3600', true );
+    header( 'Expires: ' . gmdate( 'D, d M Y H:i:s', time() + 300 ) . ' GMT', true );
 
     echo '<?xml version="1.0" encoding="' . esc_attr( get_bloginfo( 'charset' ) ) . '"?>' . "\n";
     echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">' . "\n";
@@ -371,6 +383,8 @@ function novosti_render_image_sitemap() {
     status_header( 200 );
     header( 'Content-Type: application/xml; charset=' . get_bloginfo( 'charset' ), true );
     header( 'X-Robots-Tag: noindex, follow', true );
+    header( 'Cache-Control: public, max-age=300, stale-while-revalidate=3600', true );
+    header( 'Expires: ' . gmdate( 'D, d M Y H:i:s', time() + 300 ) . ' GMT', true );
 
     echo '<?xml version="1.0" encoding="' . esc_attr( get_bloginfo( 'charset' ) ) . '"?>' . "\n";
     echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">' . "\n";
