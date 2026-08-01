@@ -83,17 +83,15 @@ function novosti_get_primary_menu_slugs() {
         'nedvizhimost',
         'immigratsiya',
         'deutsche-bahn',
-        'burgergeld',
         'rabota',
-        'avtomobili',
+        'zdravoohranenie',
         'proisshestviya',
     );
 }
 
 function novosti_get_primary_menu_label( $term ) {
     $labels = array(
-        'burgergeld'     => 'Пособия',
-        'avtomobili'     => 'Авто',
+        'zdravoohranenie' => 'Здравоохранение',
         'proisshestviya' => 'Происшествия',
     );
 
@@ -127,7 +125,7 @@ function novosti_render_primary_menu_fallback() {
 function novosti_append_priority_menu_items( $items, $args ) {
     if ( empty( $args->theme_location ) || $args->theme_location !== 'primary' ) return $items;
 
-    foreach ( novosti_get_primary_menu_terms( array( 'burgergeld', 'rabota', 'avtomobili', 'proisshestviya' ) ) as $term ) {
+    foreach ( novosti_get_primary_menu_terms( array( 'rabota', 'zdravoohranenie', 'proisshestviya' ) ) as $term ) {
         $url = get_category_link( $term->term_id );
         if ( strpos( $items, $url ) !== false ) continue;
 
