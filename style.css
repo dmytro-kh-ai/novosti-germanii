@@ -240,6 +240,34 @@ ul { list-style: none; }
   justify-content: center;
 }
 
+.site-nav__social {
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.site-nav__social:hover {
+  color: #fff;
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.site-nav__social svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+  fill: currentColor;
+}
+
+.site-nav__social--telegram { background: #229ed9; }
+.site-nav__social--facebook { background: #1877f2; }
+
 /* ===== HAMBURGER (мобильное меню) ===== */
 .site-nav__burger {
   display: none;
