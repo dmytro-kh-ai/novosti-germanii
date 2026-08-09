@@ -184,7 +184,7 @@
           <path d="M21.94 4.16c.32-1.34-.94-2.14-2.07-1.66L2.7 9.74c-1.17.5-1.15 2.15.08 2.53l4.37 1.35 1.67 5.2c.38 1.18 1.88 1.46 2.65.5l2.38-2.96 4.46 3.27c1.03.76 2.5.2 2.8-1.05l2.83-14.42ZM8.2 12.69l9.96-6.17c.33-.2.67.25.38.5l-8.23 7.4-.32 3.55-1.2-3.74 7.18-6.45-8.77 5Z"/>
         </svg>
       </a>
-      <a class="site-nav__social site-nav__social--facebook" href="https://www.facebook.com/novostigermaniide" target="_blank" rel="noopener noreferrer" aria-label="Новости Германии в Facebook">
+      <a class="site-nav__social site-nav__social--facebook" href="https://www.facebook.com/profile.php?id=61582406004814" target="_blank" rel="noopener noreferrer" aria-label="Новости Германии в Facebook">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5.02 3.66 9.19 8.44 9.94v-7.03H7.9v-2.91h2.54V9.84c0-2.52 1.49-3.91 3.77-3.91 1.09 0 2.24.2 2.24.2V8.6h-1.26c-1.24 0-1.63.78-1.63 1.57v1.89h2.78l-.44 2.91h-2.34V22C18.34 21.25 22 17.08 22 12.06Z"/>
         </svg>
