@@ -1544,13 +1544,52 @@ function novosti_get_latest_news( $count = 6 ) {
     return get_posts( array('post_type'=>'post','posts_per_page'=>$count,'category__not_in'=>$ex) );
 }
 
+function novosti_get_life_tag_ids() {
+    $ids = array();
+    $life_tag_slugs = array(
+        'ng-blog',
+        'zhizn-v-germanii',
+        'life-in-germany',
+        'poleznoe',
+        'spravochnik',
+        'blog',
+    );
+
+    foreach ( $life_tag_slugs as $slug ) {
+        $tag = get_term_by( 'slug', $slug, 'post_tag' );
+        if ( $tag && ! is_wp_error( $tag ) ) {
+            $ids[] = (int) $tag->term_id;
+        }
+    }
+
+    return array_values( array_unique( array_filter( $ids ) ) );
+}
+
+function novosti_get_life_latest_articles( $count = 6 ) {
+    $tag_ids = novosti_get_life_tag_ids();
+    if ( ! $tag_ids ) return array();
+
+    return get_posts( array(
+        'post_type'           => 'post',
+        'post_status'         => 'publish',
+        'posts_per_page'      => $count,
+        'tag__in'             => $tag_ids,
+        'category__not_in'    => array_merge( novosti_get_special_category_ids(), novosti_get_city_category_ids() ),
+        'ignore_sticky_posts' => true,
+        'no_found_rows'       => true,
+    ) );
+}
+
 function novosti_get_common_latest_news( $count = 6 ) {
     $ex = array_merge( novosti_get_special_category_ids(), novosti_get_city_category_ids() );
+    $life_tag_ids = novosti_get_life_tag_ids();
+
     return get_posts( array(
         'post_type'           => 'post',
         'post_status'         => 'publish',
         'posts_per_page'      => $count,
         'category__not_in'    => $ex,
+        'tag__not_in'         => $life_tag_ids,
         'ignore_sticky_posts' => true,
         'no_found_rows'       => true,
     ) );
@@ -1572,6 +1611,8 @@ function novosti_get_all_city_latest_news( $count = 6 ) {
 
 function novosti_get_yesterday_news( $count = 3 ) {
     $ex = array_merge( novosti_get_special_category_ids(), novosti_get_city_category_ids() );
+    $life_tag_ids = novosti_get_life_tag_ids();
+
     return get_posts( array(
         'post_type'        => 'post',
         'post_status'      => 'publish',
@@ -1582,6 +1623,7 @@ function novosti_get_yesterday_news( $count = 3 ) {
             'day'   => date('d', strtotime('-1 day')),
         )),
         'category__not_in' => $ex,
+        'tag__not_in'      => $life_tag_ids,
         'ignore_sticky_posts' => true,
         'no_found_rows'    => true,
     ));

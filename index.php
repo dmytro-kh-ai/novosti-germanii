@@ -236,6 +236,78 @@ if ( $today_news ) :
 <?php endif; ?>
 
 <?php
+$life_news = novosti_get_life_latest_articles(6);
+
+if ( $life_news ) :
+$life_tag = get_term_by( 'slug', 'ng-blog', 'post_tag' );
+$life_link = $life_tag && ! is_wp_error( $life_tag ) ? get_tag_link( $life_tag->term_id ) : '';
+?>
+
+<div class="section-wrap">
+  <div class="section-head">
+    <span class="section-head__title">Жизнь в Германии</span>
+    <?php if ( $life_link ) : ?>
+      <a class="section-head__link" href="<?php echo esc_url( $life_link ); ?>">Все материалы &rarr;</a>
+    <?php endif; ?>
+  </div>
+
+  <hr class="section-divider">
+
+  <div class="news-grid">
+    <?php foreach ( $life_news as $post ) :
+      setup_postdata($post);
+
+      $cats = get_the_category($post->ID);
+      $cat  = $cats ? $cats[0] : null;
+    ?>
+
+    <article class="news-card">
+      <div class="news-card__thumb">
+        <a href="<?php echo esc_url(get_permalink($post->ID)); ?>">
+          <?php
+          if ( has_post_thumbnail($post->ID) ) {
+            echo get_the_post_thumbnail(
+              $post->ID,
+              'news-card',
+              array(
+                'onerror' => "this.style.display='none';this.closest('.news-card__thumb').classList.add('is-empty');"
+              )
+            );
+          } else {
+            echo '<div style="width:100%;height:100%;background:#e8e8e8;"></div>';
+          }
+          ?>
+        </a>
+      </div>
+
+      <div class="news-card__body">
+        <?php if ($cat) : ?>
+          <div class="news-card__cat">
+            <a href="<?php echo esc_url(get_category_link($cat->term_id)); ?>">
+              <?php echo esc_html($cat->name); ?>
+            </a>
+          </div>
+        <?php endif; ?>
+
+        <h2 class="news-card__title">
+          <a href="<?php echo esc_url(get_permalink($post->ID)); ?>">
+            <?php echo esc_html(get_the_title($post->ID)); ?>
+          </a>
+        </h2>
+
+        <div class="news-card__time">
+          <?php echo novosti_time_ago($post->ID); ?>
+        </div>
+      </div>
+    </article>
+
+    <?php endforeach; wp_reset_postdata(); ?>
+  </div>
+</div>
+
+<?php endif; ?>
+
+<?php
 $city_news = novosti_get_all_city_latest_news(6);
 
 if ( $city_news ) :
