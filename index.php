@@ -129,12 +129,18 @@ $partner_posts = novosti_get_partner_posts(3);
     </div>
 
     <div class="collaboration-block__body">
-      <p>Размещайте рекламу на новостном сайте для русскоязычной аудитории Германии.</p>
-      <p>Баннеры, партнёрские материалы и другие форматы обсуждаются индивидуально.</p>
+      <div class="collaboration-block__badge">Для бизнеса и экспертов</div>
+      <p class="collaboration-block__lead">Хотите рассказать о своих услугах русскоязычной аудитории Германии?</p>
+
+      <ul class="collaboration-block__list">
+        <li>Баннеры на главной странице</li>
+        <li>Партнёрские материалы</li>
+        <li>Индивидуальные рекламные форматы</li>
+      </ul>
     </div>
 
     <div class="collaboration-block__footer">
-      <a href="<?php echo esc_url( home_url('/reklama.php') ); ?>">Посмотреть условия &rarr;</a>
+      <a href="<?php echo esc_url( home_url('/reklama.php') ); ?>">Коммерческое предложение &rarr;</a>
     </div>
   </div>
 
