@@ -74,7 +74,6 @@ if ( $paged > 1 ) :
 <?php
 $ad_banner     = novosti_get_ad_banner();
 $partner_posts = novosti_get_partner_posts(3);
-$afisha        = novosti_get_afisha(3);
 ?>
 
 <div class="ad-layout <?php echo $ad_banner ? '' : 'ad-layout--single'; ?>">
@@ -123,44 +122,19 @@ $afisha        = novosti_get_afisha(3);
   </div>
   <?php endif; ?>
 
-  <div class="afisha-block">
-
-    <div class="afisha-block__header">
-      <span class="afisha-block__title">&#x1F4C5; Афиша событий</span>
-      <span class="afisha-block__city">Германия</span>
+  <div class="collaboration-block">
+    <div class="collaboration-block__header">
+      <span class="collaboration-block__title">Сотрудничество</span>
+      <span class="collaboration-block__label">Реклама</span>
     </div>
 
-    <?php
-    if ( $afisha ) {
-      foreach ( $afisha as $event ) {
-        $event_date = get_post_meta($event->ID, '_event_date', true);
-        $event_time = get_post_meta($event->ID, '_event_time', true);
-        $event_city = get_post_meta($event->ID, '_event_city', true);
+    <div class="collaboration-block__body">
+      <p>Размещайте рекламу на новостном сайте для русскоязычной аудитории Германии.</p>
+      <p>Баннеры, партнёрские материалы и другие форматы обсуждаются индивидуально.</p>
+    </div>
 
-        $day   = $event_date ? date('d', strtotime($event_date)) : get_the_date('d', $event->ID);
-        $month = $event_date ? mb_strtoupper(date('M', strtotime($event_date))) : mb_strtoupper(get_the_date('M', $event->ID));
-
-        echo '<div class="afisha-event">';
-        echo '<div class="afisha-event__date"><div class="afisha-event__day">' . esc_html($day) . '</div><div class="afisha-event__month">' . esc_html($month) . '</div></div>';
-        echo '<div class="afisha-event__info">';
-        echo '<div class="afisha-event__name"><a href="' . esc_url(get_permalink($event->ID)) . '">' . esc_html($event->post_title) . '</a></div>';
-        echo '<div class="afisha-event__meta">';
-
-        if ($event_time) echo esc_html($event_time);
-        if ($event_city) echo ' · ' . esc_html($event_city);
-
-        echo '</div></div></div>';
-      }
-    } else {
-      echo '<div class="afisha-event"><div class="afisha-event__date"><div class="afisha-event__day">—</div></div><div class="afisha-event__info"><div class="afisha-event__name" style="color:#bbb;font-size:12px;">Добавьте записи в категорию «afisha»</div></div></div>';
-    }
-
-    $afisha_cat = get_category_by_slug('afisha');
-    $afisha_url = $afisha_cat ? esc_url(get_category_link($afisha_cat->term_id)) : '#';
-    ?>
-
-    <div class="afisha-block__footer">
-      <a href="<?php echo $afisha_url; ?>">Все события &rarr;</a>
+    <div class="collaboration-block__footer">
+      <a href="<?php echo esc_url( home_url('/reklama.php') ); ?>">Посмотреть условия &rarr;</a>
     </div>
   </div>
 
