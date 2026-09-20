@@ -998,18 +998,23 @@ ul { list-style: none; }
   align-items: center;
   justify-content: center;
   width: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: auto;
   height: auto;
   background: #fff;
   overflow: hidden;
 }
 .banner-carousel__slide img {
   width: 100% !important;
-  height: 100% !important;
+  height: auto !important;
   max-width: 100% !important;
-  max-height: 100% !important;
+  max-height: none !important;
   object-fit: contain !important;
   margin: 0 auto !important;
+}
+@media (max-width: 600px) {
+  .ad-block { padding-left: 8px; padding-right: 8px; }
+  .banner-carousel__slide a { width: 92%; margin: 0 auto; }
+  .banner-carousel__slide img { width: 100% !important; }
 }
 .banner-carousel__dots {
   text-align: center;
